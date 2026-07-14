@@ -1,14 +1,28 @@
 <template>
-  <div class="sticky top-[calc(var(--header-height)+24px)] space-y-6">
+  <div class="sticky space-y-6" :style="{ top: `calc(var(--header-height) + 24px)` }">
     <!-- 위치 정보 카드 -->
     <div class="rounded-3xl border border-[var(--color-border)] bg-white p-8 shadow-md">
-      <h2 class="text-2xl font-bold text-[var(--color-text)]">위치 안내</h2>
+      <h2 class="text-2xl font-bold text-[var(--color-text)]">
+        위치 안내
+      </h2>
 
-      <!-- 지도 placeholder -->
-      <div class="mt-6 rounded-2xl bg-gray-100 h-64 flex items-center justify-center">
+      <!-- 지도 또는 대체 UI -->
+      <div v-if="place.latitude && place.longitude" class="mt-6">
+        <PlaceMap
+          :places="[place]"
+          :selected-place-id="place.id"
+          :center="[place.latitude, place.longitude]"
+          :zoom="15"
+          map-height="300px"
+        />
+      </div>
+
+      <div v-else class="mt-6 rounded-2xl bg-gray-100 h-80 flex items-center justify-center">
         <div class="text-center">
-          <div class="text-4xl mb-2">🗺️</div>
-          <p class="text-[var(--color-text-muted)]">지도를 준비 중입니다</p>
+          <div class="text-4xl mb-2">📍</div>
+          <p class="text-[var(--color-text-muted)]">
+            위치 정보가 제공되지 않는 장소입니다.
+          </p>
         </div>
       </div>
 
@@ -20,12 +34,22 @@
         </p>
       </div>
 
-      <!-- 길찾기 버튼 (비활성) -->
+      <!-- 지도에서 크게 보기 버튼 -->
+      <a
+        v-if="place.latitude && place.longitude"
+        :href="`https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}&zoom=15`"
+        target="_blank"
+        rel="noopener noreferrer"
+        class="mt-6 block w-full rounded-xl bg-[var(--color-primary)] px-4 py-3 text-center text-[var(--color-primary)] font-semibold text-white transition-all hover:bg-[var(--color-primary-hover)]"
+      >
+        지도에서 크게 보기
+      </a>
       <button
+        v-else
         disabled
         class="mt-6 w-full rounded-xl bg-gray-200 px-4 py-3 text-gray-500 font-semibold cursor-not-allowed"
       >
-        길찾기 (준비 중)
+        위치 정보 없음
       </button>
     </div>
 
@@ -40,6 +64,8 @@
 </template>
 
 <script setup>
+import PlaceMap from '@/components/place/PlaceMap.vue'
+
 defineProps({
   place: {
     type: Object,
