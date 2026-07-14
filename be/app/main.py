@@ -2,10 +2,12 @@ from fastapi import FastAPI
 
 from app.api.routers.health import router as health_router
 from app.api.routers.import_data import router as import_router
+from app.api.routers.posts import router as posts_router
 from app.db.base import Base
 from app.db.session import engine
 
 app = FastAPI(title="LocalHub API")
+
 
 @app.on_event("startup")
 def startup():
@@ -13,3 +15,4 @@ def startup():
 
 app.include_router(health_router)
 app.include_router(import_router)
+app.include_router(posts_router)
