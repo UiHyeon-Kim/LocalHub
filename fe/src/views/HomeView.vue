@@ -1,11 +1,34 @@
 <template>
-  <section class="mx-auto max-w-7xl px-6 py-16">
-    <h1 class="text-3xl font-bold text-slate-900">
-      홈
-    </h1>
+  <div>
+    <!-- Hero Section -->
+    <HeroSection />
 
-    <p class="mt-4 text-slate-600">
-      구미 지역 정보를 확인하는 LocalHub 홈 화면입니다.
-    </p>
-  </section>
+    <!-- Category Section -->
+    <div class="page-section">
+      <CategorySection />
+    </div>
+
+    <!-- Featured Places Section -->
+    <FeaturedPlacesSection />
+
+    <!-- Mood Section -->
+    <div class="page-section">
+      <MoodSection />
+    </div>
+
+    <!-- Community Preview Section -->
+    <CommunityPreviewSection />
+
+    <!-- Region Banner Section -->
+    <RegionBannerSection />
+  </div>
 </template>
+
+<script setup>
+import HeroSection from '@/components/home/HeroSection.vue'
+import CategorySection from '@/components/home/CategorySection.vue'
+import FeaturedPlacesSection from '@/components/home/FeaturedPlacesSection.vue'
+import MoodSection from '@/components/home/MoodSection.vue'
+import CommunityPreviewSection from '@/components/home/CommunityPreviewSection.vue'
+import RegionBannerSection from '@/components/home/RegionBannerSection.vue'
+</script>
