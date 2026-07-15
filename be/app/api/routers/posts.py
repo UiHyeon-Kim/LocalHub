@@ -7,6 +7,7 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.place import Place
 from app.models.post import Post
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
@@ -17,6 +18,7 @@ class PostCreate(BaseModel):
     content: Optional[str] = None
     category: Optional[str] = None
     location_name: Optional[str] = None
+    place_id: Optional[int] = None
     password: Optional[str] = None
 
 
@@ -25,6 +27,7 @@ class PostUpdate(BaseModel):
     content: Optional[str] = None
     category: Optional[str] = None
     location_name: Optional[str] = None
+    place_id: Optional[int] = None
     password: Optional[str] = None
 
 
@@ -52,6 +55,25 @@ class PostListResponse(BaseModel):
     size: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+def resolve_place_id(
+    db: Session,
+    place_id: Optional[int],
+    location_name: str,
+) -> Optional[int]:
+    if place_id is not None:
+        place = db.query(Place).filter(Place.id == place_id).first()
+        if not place:
+            raise HTTPException(status_code=400, detail="place_id not found")
+        return place_id
+
+    if location_name:
+        place = db.query(Place).filter(Place.title == location_name).first()
+        if place:
+            return place.id
+
+    return None
 
 
 @router.get("", response_model=PostListResponse)
@@ -112,11 +134,14 @@ def create_post(payload: PostCreate, db: Session = Depends(get_db)):
             detail="title, content, category, and password are required",
         )
 
+    place_id = resolve_place_id(db, payload.place_id, location_name)
+
     post = Post(
         title=title,
         content=content,
         category=category,
         location_name=location_name,
+        place_id=place_id,
         password=password,
     )
     db.add(post)
@@ -156,7 +181,13 @@ def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)
         post.category = category
 
     if payload.location_name is not None:
-        post.location_name = payload.location_name.strip()
+        location_name = payload.location_name.strip()
+        if not location_name:
+            raise HTTPException(status_code=400, detail="location_name is required")
+        post.location_name = location_name
+        post.place_id = resolve_place_id(db, payload.place_id, location_name)
+    elif payload.place_id is not None:
+        post.place_id = resolve_place_id(db, payload.place_id, post.location_name)
 
     post.updated_at = datetime.now(timezone.utc)
     db.commit()
