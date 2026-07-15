@@ -3,7 +3,7 @@
  * Stitch 디자인 기반 LocalHub 홈 페이지 개발용
  */
 
-export const heroBackgroundImage = 'https://images.unsplash.com/photo-1506905925346-21bda4d32df4?w=1600&h=900&fit=crop'
+export const heroBackgroundImage = 'https://www.yeongnam.com/mnt/file/202203/2022032001000640600027361.jpg'
 
 export const featuredPlaces = [
   {
