@@ -11,7 +11,7 @@
         <button
           v-for="mood in moods"
           :key="mood.id"
-          @click="selectedMood = mood.id"
+          @click="handleMoodClick(mood)"
           :class="[
             'group relative h-96 overflow-hidden rounded-3xl transition-all duration-300',
             selectedMood === mood.id && 'ring-4 ring-[var(--color-primary)]'
@@ -47,7 +47,36 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 import { moods } from '@/data/homeMockData'
 
+const router = useRouter()
 const selectedMood = ref(null)
+
+const handleMoodClick = (mood) => {
+  selectedMood.value = mood.id
+
+  const searchMap = {
+    'mood-1': { keyword: '공원' },
+    'mood-2': { category: '문화시설' },
+    'mood-3': { category: '관광지' },
+    'mood-4': { category: '레포츠' },
+  }
+
+  const config = searchMap[mood.id] || {}
+  const query = {}
+
+  if (config.keyword) {
+    query.keyword = config.keyword
+  }
+
+  if (config.category) {
+    query.category = config.category
+  }
+
+  router.push({
+    path: '/places',
+    query,
+  })
+}
 </script>

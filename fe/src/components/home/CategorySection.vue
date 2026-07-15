@@ -21,9 +21,8 @@
             type="button"
             :class="[
               'rounded-full px-4 py-3 text-sm font-medium transition',
-              selectedCategory === categoryItem.id
-                ? 'bg-[var(--color-primary)] text-white'
-                : 'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:border-[var(--color-primary)]',
+              selectedCategory === categoryItem.id,
+              'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:border-[var(--color-primary)] hover:text-[var(--color-primary)]',
             ]"
             @click="selectCategory(categoryItem.id)"
           >
@@ -47,8 +46,8 @@ const categories = [
   { id: '전체', name: '전체' },
   { id: '관광지', name: '관광지' },
   { id: '문화시설', name: '문화시설' },
-  { id: '축제공연행사', name: '축제·행사' },
-  { id: '여행코스', name: '여행 코스' },
+  { id: '축제·행사', name: '축제·행사' },
+  { id: '여행 코스', name: '여행 코스' },
   { id: '레포츠', name: '레포츠' },
   { id: '숙박', name: '숙박' },
   { id: '쇼핑', name: '쇼핑' },
