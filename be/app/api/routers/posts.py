@@ -13,11 +13,11 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 
 
 class PostCreate(BaseModel):
-    title: str
-    content: str
-    category: str
+    title: Optional[str] = None
+    content: Optional[str] = None
+    category: Optional[str] = None
     location_name: Optional[str] = None
-    password: str
+    password: Optional[str] = None
 
 
 class PostUpdate(BaseModel):
@@ -25,11 +25,11 @@ class PostUpdate(BaseModel):
     content: Optional[str] = None
     category: Optional[str] = None
     location_name: Optional[str] = None
-    password: str
+    password: Optional[str] = None
 
 
 class PostDelete(BaseModel):
-    password: str
+    password: Optional[str] = None
 
 
 class PostOut(BaseModel):
@@ -100,10 +100,10 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
 def create_post(payload: PostCreate, db: Session = Depends(get_db)):
-    title = payload.title.strip()
-    content = payload.content.strip()
-    category = payload.category.strip()
-    password = payload.password.strip()
+    title = (payload.title or "").strip()
+    content = (payload.content or "").strip()
+    category = (payload.category or "").strip()
+    password = (payload.password or "").strip()
     location_name = (payload.location_name or "").strip()
 
     if not title or not content or not category or not password:
@@ -131,7 +131,7 @@ def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
 
-    if not payload.password.strip():
+    if payload.password is None or not payload.password.strip():
         raise HTTPException(status_code=400, detail="password is required")
 
     if payload.password != post.password:
@@ -170,7 +170,7 @@ def delete_post(post_id: int, payload: PostDelete, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
 
-    if not payload.password.strip():
+    if payload.password is None or not payload.password.strip():
         raise HTTPException(status_code=400, detail="password is required")
 
     if payload.password != post.password:
