@@ -1,4 +1,4 @@
-from sqlalchemy import Column, Integer, String, Text, DateTime
+from sqlalchemy import Column, Integer, String, Text, DateTime, ForeignKey
 from sqlalchemy.sql import func
 
 from app.db.base import Base
@@ -12,6 +12,7 @@ class Post(Base):
     content = Column(Text, nullable=False)
     category = Column(String(50), nullable=False, index=True, server_default="기타")
     location_name = Column(String(200), nullable=False, server_default="")
+    place_id = Column(Integer, ForeignKey("places.id"), nullable=True, index=True)
     password = Column(String(100), nullable=False)
     view_count = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
