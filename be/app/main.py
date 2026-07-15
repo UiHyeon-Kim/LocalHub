@@ -7,6 +7,7 @@ from app.api.routers.import_data import router as import_router
 from app.api.routers.posts import router as posts_router
 from app.api.routers.locations import router as locations_router
 from app.api.routers.places import router as places_router
+from app.api.routers.tourism import router as tourism_router
 from app.db.base import Base
 from app.db.session import engine
 
@@ -36,3 +37,4 @@ app.include_router(posts_router)
 app.include_router(locations_router)
 app.include_router(places_router)
 app.include_router(chat_router)
+app.include_router(tourism_router)

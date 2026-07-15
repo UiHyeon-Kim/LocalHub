@@ -27,3 +27,7 @@ if raw_database_url.startswith("sqlite:///./"):
     )
 else:
     DATABASE_URL = raw_database_url
+
+
+# Korea Tourism Organization API
+TOUR_API_SERVICE_KEY = os.getenv("TOUR_API_SERVICE_KEY", "")
