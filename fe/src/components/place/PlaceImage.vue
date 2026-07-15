@@ -1,9 +1,5 @@
 <template>
-  <div
-    class="relative w-full overflow-hidden bg-gray-200"
-    :style="{ aspectRatio: aspectRatio }"
-  >
-    <!-- 이미지 표시 -->
+  <div class="relative w-full overflow-hidden bg-[var(--color-surface-muted)]" :style="{ aspectRatio: aspectRatio }">
     <img
       v-if="imageUrl && !imageError"
       :src="imageUrl"
@@ -12,25 +8,22 @@
       @error="imageError = true"
     />
 
-    <!-- Fallback UI -->
     <div
       v-if="!imageUrl || imageError"
-      class="flex h-full w-full flex-col items-center justify-center bg-gradient-to-br from-green-100 to-teal-50"
+      class="flex h-full w-full flex-col items-center justify-center gap-3 bg-[var(--color-surface-muted)] text-[var(--color-text-muted)]"
     >
-      <div class="mb-2 flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary)]">
-        <span class="text-2xl font-bold text-white">
-          {{ name.charAt(0) }}
-        </span>
+      <div class="flex h-16 w-16 items-center justify-center rounded-full bg-[var(--color-primary)] text-2xl font-semibold text-white">
+        {{ displayInitial }}
       </div>
-      <p class="text-sm text-[var(--color-text)]">
-        {{ category }}
+      <p class="text-sm text-[var(--color-text-muted)]">
+        {{ category || '장소' }}
       </p>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
+import { computed, ref, watch } from 'vue'
 
 const props = defineProps({
   imageUrl: {
@@ -47,7 +40,7 @@ const props = defineProps({
   },
   aspectRatio: {
     type: String,
-    default: '16 / 9'
+    default: '4 / 3'
   }
 })
 
@@ -55,5 +48,9 @@ const imageError = ref(false)
 
 watch(() => props.imageUrl, () => {
   imageError.value = false
+})
+
+const displayInitial = computed(() => {
+  return props.name ? props.name.charAt(0).toUpperCase() : 'L'
 })
 </script>

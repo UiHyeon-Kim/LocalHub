@@ -1,106 +1,173 @@
 <template>
-  <!-- 플로팅 버튼 (접힌 상태) -->
+  <!-- 플로팅 버튼 -->
   <button
     v-if="!isOpen"
-    @click="isOpen = true"
+    type="button"
     aria-label="지역 정보 챗봇 열기"
-    class="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-lg transition-all hover:-translate-y-1 hover:shadow-xl focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50"
+    class="fixed bottom-6 right-6 z-40 flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-primary)] text-white shadow-xl transition-all hover:-translate-y-1 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50"
+    @click="isOpen = true"
   >
     <span class="text-2xl">💬</span>
   </button>
 
-  <!-- 챗봇 위젯 (펼친 상태) -->
+  <!-- 챗봇 위젯 -->
   <Transition name="slide">
-    <div
+    <section
       v-if="isOpen"
-      class="fixed bottom-6 right-6 z-40 flex w-full max-w-[420px] flex-col rounded-3xl bg-white shadow-2xl md:h-auto md:max-h-[640px]"
-      :style="{ maxHeight: 'calc(100vh - 48px)' }"
+      role="dialog"
+      aria-label="LocalHub 지역 정보 챗봇"
+      class="fixed bottom-6 right-6 z-50 flex w-[calc(100%-32px)] max-w-[480px] flex-col overflow-hidden rounded-3xl bg-white shadow-2xl"
+      :style="{
+        height: 'min(640px, calc(100vh - 48px))',
+      }"
+      @wheel.stop
+      @touchmove.stop
     >
-      <!-- 헤더 -->
-      <div class="border-b border-[var(--color-border)] bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] px-6 py-4 text-white rounded-t-3xl">
-        <div class="flex items-start justify-between">
-          <div>
-            <h2 class="text-lg font-bold">LocalHub 지역 정보 챗봇</h2>
-            <p class="text-sm text-white/80">지역 장소와 커뮤니티 정보를 물어보세요.</p>
-          </div>
-          <div class="flex gap-2">
-            <button
-              @click="handleReset"
-              aria-label="새 대화 시작"
-              class="rounded-lg bg-white/20 px-3 py-2 text-sm font-medium transition-all hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
-            >
-              🔄
-            </button>
-            <button
-              @click="isOpen = false"
-              aria-label="챗봇 닫기"
-              class="rounded-lg bg-white/20 px-3 py-2 font-medium transition-all hover:bg-white/30 focus:outline-none focus:ring-2 focus:ring-white/50"
-            >
-              ✕
-            </button>
-          </div>
-        </div>
-      </div>
-
-      <!-- 메시지 영역 -->
-      <div
-        ref="messagesContainer"
-        class="flex-1 overflow-y-auto space-y-4 px-6 py-4"
+      <!-- Header -->
+      <header
+        class="flex flex-shrink-0 items-center justify-between bg-gradient-to-r from-[var(--color-primary)] to-[var(--color-secondary)] px-5 py-4 text-white"
       >
-        <ChatMessage
-          v-for="msg in messages"
-          :key="msg.id"
-          :message="msg"
-        />
-
-        <!-- 추천 질문 (메시지가 1개일 때만 표시) -->
-        <div v-if="messages.length === 1" class="space-y-3">
-          <div class="text-xs text-[var(--color-text-muted)] font-semibold">
-            💡 다음과 같이 물어볼 수 있어요:
-          </div>
-          <ChatSuggestionList
-            :suggestions="suggestions"
-            @select="handleSendMessage"
-          />
-        </div>
-      </div>
-
-      <!-- 입력 영역 -->
-      <div class="border-t border-[var(--color-border)] bg-gray-50 px-6 py-4 rounded-b-3xl">
-        <label class="sr-only">메시지 입력</label>
-        <div class="flex gap-2">
-          <textarea
-            v-model="inputMessage"
-            @keydown.enter.prevent="handleKeydown"
-            @keydown.escape="isOpen = false"
-            placeholder="질문을 입력하세요..."
-            rows="1"
-            class="flex-1 rounded-lg border border-[var(--color-border)] px-3 py-2 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] resize-none transition-colors focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
-            :style="{ minHeight: '40px', maxHeight: '80px', overflow: 'auto' }"
-          ></textarea>
-          <button
-            @click="handleSendMessage(inputMessage)"
-            :disabled="isSending || !inputMessage.trim()"
-            aria-label="메시지 전송"
-            class="flex-shrink-0 rounded-lg bg-[var(--color-primary)] px-4 py-2 font-medium text-white transition-all hover:bg-[var(--color-primary-hover)] disabled:bg-gray-300 disabled:cursor-not-allowed focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50"
+        <div class="flex min-w-0 items-center gap-3">
+          <div
+            class="flex h-10 w-10 flex-shrink-0 items-center justify-center rounded-lg bg-white/20 text-lg"
           >
-            ↓
+            LH
+          </div>
+
+          <div class="min-w-0 leading-tight">
+            <div class="truncate text-base font-semibold">
+              LocalHub 챗봇
+            </div>
+
+            <div class="truncate text-xs text-white/80">
+              장소·커뮤니티 정보를 도와드려요
+            </div>
+          </div>
+        </div>
+
+        <div class="flex flex-shrink-0 items-center gap-2">
+          <button
+            type="button"
+            aria-label="새 대화 시작"
+            class="rounded-lg bg-white/10 px-3 py-2 text-sm font-medium transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+            @click="handleReset"
+          >
+            🔄
+          </button>
+
+          <button
+            type="button"
+            aria-label="챗봇 닫기"
+            class="rounded-lg bg-white/10 px-3 py-2 text-sm font-medium transition-all hover:bg-white/20 focus:outline-none focus:ring-2 focus:ring-white/30"
+            @click="isOpen = false"
+          >
+            ✕
           </button>
         </div>
-        <div v-if="errorMessage" class="mt-2 text-xs text-red-600">
-          {{ errorMessage }}
+      </header>
+
+      <!-- 메시지와 입력창 -->
+      <div class="flex min-h-0 flex-1 flex-col">
+        <!-- 메시지 영역 -->
+        <div
+          ref="messagesContainer"
+          class="min-h-0 flex-1 overflow-y-auto overscroll-contain px-5 py-4"
+          @wheel.stop
+          @touchmove.stop
+        >
+          <div class="space-y-4">
+            <ChatMessage
+              v-for="message in messages"
+              :key="message.id"
+              :message="message"
+            />
+          </div>
+
+          <!-- 추천 질문 -->
+          <div
+            v-if="messages.length === 1"
+            class="mt-5 px-2 pb-2"
+          >
+            <div
+              class="mb-3 text-xs font-semibold text-[var(--color-text-muted)]"
+            >
+              💡 이렇게 물어보세요
+            </div>
+
+            <ChatSuggestionList
+              :suggestions="suggestions"
+              @select="handleSendMessage"
+            />
+          </div>
         </div>
+
+        <!-- 입력 영역 -->
+        <footer
+          class="flex-shrink-0 border-t border-[var(--color-border)] bg-[var(--color-surface-muted)] px-5 py-4"
+        >
+          <label
+            for="chat-message-input"
+            class="sr-only"
+          >
+            메시지 입력
+          </label>
+
+          <div class="flex items-end gap-3">
+            <textarea
+              id="chat-message-input"
+              v-model="inputMessage"
+              rows="1"
+              placeholder="궁금한 점을 입력해보세요. 예: 근처 맛집 추천해줘"
+              class="max-h-36 min-h-11 flex-1 resize-none overflow-y-auto rounded-xl border border-[var(--color-border)] bg-white px-4 py-3 text-sm text-[var(--color-text)] placeholder-[var(--color-text-muted)] focus:border-[var(--color-primary)] focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/20"
+              @keydown.enter.prevent="handleKeydown"
+              @keydown.escape="isOpen = false"
+              @wheel.stop
+            />
+
+            <button
+              type="button"
+              aria-label="메시지 전송"
+              :disabled="isSending || !inputMessage.trim()"
+              class="h-11 rounded-lg bg-[var(--color-primary)] px-4 text-sm font-medium text-white transition-all hover:bg-[var(--color-primary-hover)] disabled:cursor-not-allowed disabled:bg-gray-300 focus:outline-none focus:ring-2 focus:ring-[var(--color-primary)]/50"
+              @click="handleSendMessage(inputMessage)"
+            >
+              전송
+            </button>
+          </div>
+
+          <div
+            v-if="isSending"
+            class="mt-2 text-xs text-[var(--color-text-muted)]"
+          >
+            답변을 기다리는 중입니다.
+          </div>
+
+          <div
+            v-if="errorMessage"
+            class="mt-2 text-xs text-red-600"
+          >
+            {{ errorMessage }}
+          </div>
+        </footer>
       </div>
-    </div>
+    </section>
   </Transition>
 </template>
 
 <script setup>
-import { ref, computed, nextTick, onMounted } from 'vue'
+import {
+  computed,
+  nextTick,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  watch,
+} from 'vue'
+
 import { sendChatMessage } from '@/api/chatApi'
-import { chatSuggestions } from '@/data/mockChat'
 import ChatMessage from '@/components/chat/ChatMessage.vue'
 import ChatSuggestionList from '@/components/chat/ChatSuggestionList.vue'
+import { chatSuggestions } from '@/data/mockChat'
 
 const isOpen = ref(false)
 const inputMessage = ref('')
@@ -111,11 +178,19 @@ const messagesContainer = ref(null)
 
 const suggestions = computed(() => chatSuggestions)
 
+let savedScrollY = 0
+
 const generateMessageId = () => {
-  if (typeof crypto !== 'undefined' && crypto.randomUUID) {
+  if (
+    typeof crypto !== 'undefined' &&
+    typeof crypto.randomUUID === 'function'
+  ) {
     return crypto.randomUUID()
   }
-  return `msg-${Date.now()}-${Math.random().toString(36).substr(2, 9)}`
+
+  return `msg-${Date.now()}-${Math.random()
+    .toString(36)
+    .slice(2, 11)}`
 }
 
 const initializeChat = () => {
@@ -123,32 +198,63 @@ const initializeChat = () => {
     {
       id: generateMessageId(),
       role: 'assistant',
-      content: '안녕하세요. LocalHub 지역 정보 챗봇입니다.\n궁금한 장소나 지역 정보를 물어보세요.',
+      content:
+        '안녕하세요. LocalHub 지역 정보 챗봇입니다.\n궁금한 장소나 지역 정보를 물어보세요.',
       references: null,
       createdAt: new Date(),
-      status: 'success'
-    }
+      status: 'success',
+    },
   ]
 }
 
+const lockPageScroll = () => {
+  savedScrollY = window.scrollY
+
+  document.body.style.position = 'fixed'
+  document.body.style.top = `-${savedScrollY}px`
+  document.body.style.left = '0'
+  document.body.style.right = '0'
+  document.body.style.width = '100%'
+  document.body.style.overflow = 'hidden'
+}
+
+const unlockPageScroll = () => {
+  const scrollY = savedScrollY
+
+  document.body.style.position = ''
+  document.body.style.top = ''
+  document.body.style.left = ''
+  document.body.style.right = ''
+  document.body.style.width = ''
+  document.body.style.overflow = ''
+
+  window.scrollTo(0, scrollY)
+}
+
 const handleReset = () => {
-  messages.value = []
   inputMessage.value = ''
   errorMessage.value = ''
   initializeChat()
+  scrollToBottom()
 }
 
 const scrollToBottom = async () => {
   await nextTick()
-  if (messagesContainer.value) {
-    messagesContainer.value.scrollTop = messagesContainer.value.scrollHeight
+
+  if (!messagesContainer.value) {
+    return
   }
+
+  messagesContainer.value.scrollTop =
+    messagesContainer.value.scrollHeight
 }
 
 const handleKeydown = (event) => {
   if (event.shiftKey) {
+    inputMessage.value += '\n'
     return
   }
+
   handleSendMessage(inputMessage.value)
 }
 
@@ -162,70 +268,96 @@ const handleSendMessage = async (message) => {
   errorMessage.value = ''
   isSending.value = true
 
-  const userMessageId = generateMessageId()
   messages.value.push({
-    id: userMessageId,
+    id: generateMessageId(),
     role: 'user',
     content: trimmedMessage,
     references: null,
     createdAt: new Date(),
-    status: 'success'
+    status: 'success',
   })
 
   inputMessage.value = ''
   await scrollToBottom()
 
   const assistantMessageId = generateMessageId()
+
   messages.value.push({
     id: assistantMessageId,
     role: 'assistant',
     content: '',
     references: null,
     createdAt: new Date(),
-    status: 'sending'
+    status: 'sending',
   })
+
   await scrollToBottom()
 
   try {
     const response = await sendChatMessage(trimmedMessage)
 
-    const assistantMessage = messages.value.find(m => m.id === assistantMessageId)
+    const assistantMessage = messages.value.find(
+      (messageItem) => messageItem.id === assistantMessageId,
+    )
+
     if (assistantMessage) {
       assistantMessage.content = response.answer
-      assistantMessage.references = response.references || null
+      assistantMessage.references =
+        response.references ?? null
       assistantMessage.status = 'success'
     }
   } catch (error) {
-    const assistantMessage = messages.value.find(m => m.id === assistantMessageId)
+    const assistantMessage = messages.value.find(
+      (messageItem) => messageItem.id === assistantMessageId,
+    )
+
+    const message =
+      error instanceof Error
+        ? error.message
+        : '답변을 가져올 수 없습니다. 다시 시도해주세요.'
+
     if (assistantMessage) {
-      assistantMessage.content = error.message || '답변을 가져올 수 없습니다. 다시 시도해주세요.'
+      assistantMessage.content = message
       assistantMessage.status = 'error'
     }
-    errorMessage.value = error.message || '오류가 발생했습니다.'
+
+    errorMessage.value = message
   } finally {
     isSending.value = false
     await scrollToBottom()
   }
 }
 
+watch(isOpen, async (open) => {
+  if (open) {
+    lockPageScroll()
+    await scrollToBottom()
+    return
+  }
+
+  unlockPageScroll()
+})
+
 onMounted(() => {
   initializeChat()
+})
+
+onBeforeUnmount(() => {
+  unlockPageScroll()
 })
 </script>
 
 <style scoped>
 .slide-enter-active,
 .slide-leave-active {
-  transition: all 0.3s ease;
+  transition:
+    transform 0.28s cubic-bezier(0.22, 0.9, 0.19, 1),
+    opacity 0.28s ease;
 }
 
-.slide-enter-from {
-  transform: translateX(400px);
-  opacity: 0;
-}
-
+.slide-enter-from,
 .slide-leave-to {
-  transform: translateX(400px);
+  transform: translateX(420px);
   opacity: 0;
 }
 </style>

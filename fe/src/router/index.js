@@ -1,5 +1,6 @@
 import { createRouter, createWebHistory } from 'vue-router'
 import HomeView from '@/views/HomeView.vue'
+import PlaceListView from '@/views/PlaceListView.vue'
 import PlaceDetailView from '@/views/PlaceDetailView.vue'
 import PostListView from '@/views/PostListView.vue'
 import PostDetailView from '@/views/PostDetailView.vue'
@@ -12,6 +13,11 @@ const router = createRouter({
       path: '/',
       name: 'Home',
       component: HomeView
+    },
+    {
+      path: '/places',
+      name: 'PlaceList',
+      component: PlaceListView
     },
     {
       path: '/places/:id',

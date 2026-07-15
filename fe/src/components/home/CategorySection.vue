@@ -1,48 +1,32 @@
 <template>
   <section class="py-12">
     <div class="page-container">
-      <!-- 제목 -->
-      <h2 class="mb-10 text-3xl font-bold text-[var(--color-text)]">
-        어떤 장소를 찾고 있나요?
-      </h2>
+      <div class="mb-6 flex flex-col gap-3 sm:flex-row sm:items-center sm:justify-between">
+        <h2 class="text-3xl font-semibold text-[var(--color-text)]">
+          어떤 장소를 찾고 있나요?
+        </h2>
+        <p class="max-w-xl text-sm text-[var(--color-text-muted)]">
+          원하는 카테고리를 선택하면 관련 장소를 빠르게 탐색할 수 있습니다.
+        </p>
+      </div>
 
-      <!-- 카테고리 카드 그리드 -->
-      <div class="grid grid-cols-7 gap-4">
-        <button
-          v-for="category in categories"
-          :key="category.id"
-          @click="selectedCategory = category.id"
-          :class="[
-            'group relative flex flex-col items-center gap-3 rounded-2xl border-2 px-4 py-8 transition-all duration-300',
-            selectedCategory === category.id
-              ? 'border-[var(--color-primary)] bg-green-50 shadow-lg'
-              : 'border-[var(--color-border)] bg-white hover:border-[var(--color-primary)] hover:-translate-y-1 hover:shadow-md'
-          ]"
-        >
-          <!-- 원형 아이콘 -->
-          <div
+      <div class="overflow-x-auto pb-2">
+        <div class="flex min-w-[720px] gap-3">
+          <button
+            v-for="category in categories"
+            :key="category.id"
+            @click="selectCategory(category.id)"
+            type="button"
             :class="[
-              'flex h-12 w-12 items-center justify-center rounded-full text-xl font-bold text-white transition-colors',
+              'rounded-full px-4 py-3 text-sm font-medium transition',
               selectedCategory === category.id
-                ? 'bg-[var(--color-primary)]'
-                : 'bg-[var(--color-secondary)] group-hover:bg-[var(--color-primary)]'
-            ]"
-          >
-            {{ category.initial }}
-          </div>
-
-          <!-- 카테고리명 -->
-          <span
-            :class="[
-              'text-center text-sm font-medium transition-colors',
-              selectedCategory === category.id
-                ? 'text-[var(--color-primary)]'
-                : 'text-[var(--color-text)]'
+                ? 'bg-[var(--color-primary)] text-white'
+                : 'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:border-[var(--color-primary)]'
             ]"
           >
             {{ category.name }}
-          </span>
-        </button>
+          </button>
+        </div>
       </div>
     </div>
   </section>
@@ -50,16 +34,26 @@
 
 <script setup>
 import { ref } from 'vue'
+import { useRouter } from 'vue-router'
 
-const selectedCategory = ref('all')
+const router = useRouter()
+const selectedCategory = ref('전체')
 
 const categories = [
-  { id: 'all', name: '전체', initial: '전' },
-  { id: 'attraction', name: '관광지', initial: '관' },
-  { id: 'culture', name: '문화시설', initial: '문' },
-  { id: 'festival', name: '축제·행사', initial: '축' },
-  { id: 'sports', name: '레포츠', initial: '레' },
-  { id: 'lodging', name: '숙박', initial: '숙' },
-  { id: 'shopping', name: '쇼핑', initial: '쇼' }
+  { id: '전체', name: '전체' },
+  { id: '관광지', name: '관광지' },
+  { id: '문화시설', name: '문화시설' },
+  { id: '축제·행사', name: '축제·행사' },
+  { id: '여행 코스', name: '여행 코스' },
+  { id: '레포츠', name: '레포츠' },
+  { id: '숙박', name: '숙박' },
+  { id: '쇼핑', name: '쇼핑' },
+  { id: '음식점', name: '음식점' }
 ]
+
+const selectCategory = (category) => {
+  selectedCategory.value = category
+  const query = category === '전체' ? {} : { category }
+  router.push({ path: '/places', query })
+}
 </script>

@@ -1,54 +1,57 @@
 <template>
-  <section class="bg-gray-50 py-16">
+  <section class="bg-[var(--color-background)] py-16">
     <div class="page-container">
-      <div class="grid grid-cols-2 gap-12">
-        <!-- 왼쪽: 소개 -->
-        <div class="flex flex-col justify-center">
-          <h2 class="text-3xl font-bold text-[var(--color-text)]">
-            사람과 장소가 만나는 곳
+      <div class="mb-6 flex items-end justify-between gap-6">
+        <div>
+          <h2 class="text-3xl font-semibold text-[var(--color-text)]">
+            지역 이야기를 빠르게 확인해보세요
           </h2>
-          <p class="mt-6 text-lg text-[var(--color-text-muted)] leading-relaxed">
-            LocalHub는 단순한 장소 소개 사이트가 아닙니다.<br />
-            지역의 사람들이 직접 경험을 나누고, 새로운 발견을 함께하는 커뮤니티입니다.
+          <p class="max-w-2xl text-sm text-[var(--color-text-muted)] leading-7">
+            지역 주민들이 남긴 이야기와 추천 정보를 뉴스 피드처럼 만나보세요.
           </p>
-          <RouterLink
-            to="/posts"
-            class="mt-8 inline-flex w-fit items-center gap-2 rounded-full bg-[var(--color-primary)] px-6 py-3 font-semibold text-white transition-all hover:bg-[var(--color-primary-hover)] hover:shadow-lg"
-          >
-            커뮤니티 전체보기
-            <span>→</span>
-          </RouterLink>
         </div>
 
-        <!-- 오른쪽: 게시글 목록 -->
-        <div class="space-y-4">
-          <RouterLink
-            v-for="post in communityPosts"
-            :key="post.id"
-            :to="`/posts/${post.id}`"
-            class="block rounded-xl border border-[var(--color-border)] bg-white p-5 transition-all hover:border-[var(--color-primary)] hover:shadow-md"
-          >
-            <div class="flex items-start justify-between gap-4">
-              <div class="flex-1">
-                <h4 class="font-semibold text-[var(--color-text)] line-clamp-2 hover:text-[var(--color-primary)]">
-                  {{ post.title }}
-                </h4>
-                <div class="mt-3 flex items-center gap-3 text-xs text-[var(--color-text-muted)]">
-                  <span class="rounded-full bg-gray-100 px-2 py-1">
-                    {{ post.category }}
-                  </span>
-                  <span>{{ post.timeAgo }}</span>
-                </div>
+        <RouterLink
+          to="/posts"
+          class="ml-auto inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-secondary)]"
+        >
+          <span class="text-white">커뮤니티 전체보기</span>
+          <span class="text-white">→</span>
+        </RouterLink>
+      </div>
+
+      <div class="grid grid-cols-1 gap-4 sm:grid-cols-2">
+        <RouterLink
+          v-for="post in displayedPosts"
+          :key="post.id"
+          :to="`/posts/${post.id}`"
+          class="block rounded-[20px] border border-[var(--color-border)] bg-white p-5 transition hover:-translate-y-0.5 hover:shadow-sm"
+        >
+          <div class="flex items-start justify-between gap-4">
+            <div class="min-w-0">
+              <h3 class="text-lg font-semibold text-[var(--color-text)] line-clamp-2">
+                {{ post.title }}
+              </h3>
+              <div class="mt-3 flex flex-wrap gap-2 text-xs text-[var(--color-text-muted)]">
+                <span class="rounded-full border border-[var(--color-border)] px-3 py-1">
+                  {{ post.category }}
+                </span>
+                <span>{{ post.timeAgo }}</span>
               </div>
-              <div class="text-[var(--color-primary)] text-lg">→</div>
             </div>
-          </RouterLink>
-        </div>
+            <div class="text-[var(--color-primary)]">→</div>
+          </div>
+        </RouterLink>
       </div>
     </div>
   </section>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import { communityPosts } from '@/data/homeMockData'
+
+const displayedPosts = computed(() => {
+  return Array.isArray(communityPosts) ? communityPosts.slice(0, 4) : []
+})
 </script>
