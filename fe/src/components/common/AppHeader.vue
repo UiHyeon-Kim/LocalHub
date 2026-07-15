@@ -23,7 +23,7 @@
         </RouterLink>
 
         <RouterLink
-          to="/"
+          to="/places"
           :class="[
             'relative pb-2 text-[var(--color-text)] transition-colors hover:text-[var(--color-primary)]',
             isActive('/places') && 'text-[var(--color-primary)] font-semibold'

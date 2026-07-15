@@ -1,82 +1,75 @@
 <template>
-  <section class="bg-gray-50 py-16">
+  <section class="bg-[var(--color-background)] py-16">
     <div class="page-container">
-      <!-- 제목 -->
-      <h2 class="mb-12 text-3xl font-bold text-[var(--color-text)]">
-        지금 주목할 지역의 장소
-      </h2>
+      <div class="mb-8 flex flex-col gap-3 sm:flex-row sm:items-end sm:justify-between">
+        <div>
+          <h2 class="text-3xl font-semibold text-[var(--color-text)]">
+            지금 주목할 지역의 장소
+          </h2>
+          <p class="mt-2 max-w-xl text-sm text-[var(--color-text-muted)]">
+            추천 장소를 살펴보고 상세 정보를 확인해보세요.
+          </p>
+        </div>
 
-      <!-- Bento Grid -->
+        <RouterLink
+          to="/places"
+          class="inline-flex items-center gap-2 text-sm font-semibold text-[var(--color-primary)] transition hover:text-[var(--color-secondary)]"
+        >
+          전체 장소 보기
+          <span>→</span>
+        </RouterLink>
+      </div>
+
       <div class="grid grid-cols-12 gap-6">
-        <!-- 큰 카드 (왼쪽) -->
         <RouterLink
           :to="`/places/${featuredPlaces[0].id}`"
-          class="group col-span-8 overflow-hidden rounded-3xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-xl"
+          class="group col-span-12 overflow-hidden rounded-[24px] border border-[var(--color-border)] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-sm md:col-span-8"
         >
           <div class="relative overflow-hidden">
-            <!-- 이미지 -->
             <img
               :src="featuredPlaces[0].imageUrl"
               :alt="featuredPlaces[0].name"
-              class="h-96 w-full object-cover transition-transform duration-300 group-hover:scale-105"
+              class="h-[420px] w-full object-cover transition duration-300 group-hover:scale-105"
             />
-            <!-- 그라데이션 오버레이 -->
-            <div class="absolute inset-0 bg-gradient-to-t from-black/30 to-transparent"></div>
+            <div class="absolute inset-0 bg-gradient-to-t from-black/40 to-transparent"></div>
 
-            <!-- 카테고리 배지 -->
-            <div class="absolute left-4 top-4">
-              <span class="inline-block rounded-full bg-[var(--color-primary)] px-3 py-1 text-sm font-semibold text-white">
+            <div class="absolute left-6 bottom-6 right-6">
+              <span class="inline-flex rounded-full bg-[var(--color-primary)] px-3 py-1 text-sm font-semibold text-white">
                 {{ featuredPlaces[0].category }}
               </span>
-            </div>
-          </div>
-
-          <!-- 콘텐츠 -->
-          <div class="p-6">
-            <h3 class="text-2xl font-bold text-[var(--color-text)]">
-              {{ featuredPlaces[0].name }}
-            </h3>
-            <p class="mt-3 line-clamp-2 text-gray-600">
-              {{ featuredPlaces[0].description }}
-            </p>
-            <p class="mt-4 text-sm text-[var(--color-text-muted)]">
-              {{ featuredPlaces[0].address }}
-            </p>
-            <div class="mt-5 inline-flex items-center text-[var(--color-primary)] font-medium">
-              상세보기 <span class="ml-2">→</span>
+              <h3 class="mt-4 text-3xl font-semibold text-white">
+                {{ featuredPlaces[0].name }}
+              </h3>
+              <p class="mt-3 max-w-xl text-sm text-white/80 line-clamp-2">
+                {{ featuredPlaces[0].description }}
+              </p>
             </div>
           </div>
         </RouterLink>
 
-        <!-- 작은 카드들 (오른쪽) -->
-        <div class="col-span-4 flex flex-col gap-6">
+        <div class="col-span-12 flex flex-col gap-6 md:col-span-4">
           <RouterLink
             v-for="place in featuredPlaces.slice(1, 3)"
             :key="place.id"
             :to="`/places/${place.id}`"
-            class="group flex overflow-hidden rounded-2xl bg-white shadow-md transition-all duration-300 hover:-translate-y-2 hover:shadow-lg"
+            class="group overflow-hidden rounded-[20px] border border-[var(--color-border)] bg-white transition duration-300 hover:-translate-y-1 hover:shadow-sm"
           >
-            <!-- 이미지 -->
-            <div class="relative h-28 w-28 overflow-hidden flex-shrink-0">
+            <div class="relative overflow-hidden h-40">
               <img
                 :src="place.imageUrl"
                 :alt="place.name"
-                class="h-full w-full object-cover transition-transform duration-300 group-hover:scale-105"
+                class="h-full w-full object-cover transition duration-300 group-hover:scale-105"
               />
             </div>
-
-            <!-- 콘텐츠 -->
-            <div class="flex flex-1 flex-col justify-between p-4">
-              <div>
-                <p class="text-xs font-semibold text-[var(--color-secondary)]">
-                  {{ place.category }}
-                </p>
-                <h4 class="mt-1 line-clamp-1 font-bold text-[var(--color-text)]">
-                  {{ place.name }}
-                </h4>
-              </div>
-              <p class="text-xs text-[var(--color-primary)] font-medium">
-                상세보기 →
+            <div class="p-5">
+              <span class="inline-flex rounded-full bg-[var(--color-surface)] px-3 py-1 text-xs font-semibold text-[var(--color-primary)]">
+                {{ place.category }}
+              </span>
+              <h4 class="mt-3 line-clamp-2 text-xl font-semibold text-[var(--color-text)]">
+                {{ place.name }}
+              </h4>
+              <p class="mt-2 text-sm text-[var(--color-text-muted)] line-clamp-2">
+                {{ place.shortDescription }}
               </p>
             </div>
           </RouterLink>
