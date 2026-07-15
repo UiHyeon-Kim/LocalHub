@@ -2,7 +2,7 @@
   <div class="min-h-screen bg-[var(--color-background)]">
     <section class="page-container py-10">
       <div class="space-y-6">
-        <div class="space-y-3">
+        <header class="space-y-3">
           <p class="text-sm font-semibold uppercase tracking-[0.26em] text-[var(--color-secondary)]">
             장소 둘러보기
           </p>
@@ -15,7 +15,7 @@
           <p class="text-sm text-[var(--color-text-muted)]">
             전체 {{ total }}개의 장소 중 {{ places.length }}개를 보고 있습니다.
           </p>
-        </div>
+        </header>
 
         <PlaceFilterBar
           v-model:modelValue="keyword"
@@ -94,8 +94,7 @@
             v-for="pageNumber in visiblePages"
             :key="pageNumber"
             @click="changePage(pageNumber)"
-            :class="[
-              'h-12 min-w-[44px] rounded-[14px] px-4 text-sm font-semibold transition',
+            :class="[ 'h-12 min-w-[44px] rounded-[14px] px-4 text-sm font-semibold transition',
               pageNumber === page
                 ? 'bg-[var(--color-primary)] text-white'
                 : 'border border-[var(--color-border)] bg-white text-[var(--color-text)] hover:border-[var(--color-primary)]'
