@@ -1,8 +1,9 @@
-from datetime import datetime
+from datetime import datetime, timezone
 from typing import List, Optional
 
 from fastapi import APIRouter, Depends, HTTPException, status
 from pydantic import BaseModel, ConfigDict
+from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
@@ -14,12 +15,16 @@ router = APIRouter(prefix="/api/posts", tags=["posts"])
 class PostCreate(BaseModel):
     title: str
     content: str
+    category: str
+    location_name: Optional[str] = None
     password: str
 
 
 class PostUpdate(BaseModel):
     title: Optional[str] = None
     content: Optional[str] = None
+    category: Optional[str] = None
+    location_name: Optional[str] = None
     password: str
 
 
@@ -31,20 +36,54 @@ class PostOut(BaseModel):
     id: int
     title: str
     content: str
-    password: str
+    category: str
+    location_name: str
     view_count: int
     created_at: datetime
+    updated_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
 
-@router.get("", response_model=List[PostOut])
-def list_posts(db: Session = Depends(get_db)):
+
+class PostListResponse(BaseModel):
+    items: List[PostOut]
+    total: int
+    page: int
+    size: int
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+@router.get("", response_model=PostListResponse)
+def list_posts(
+    keyword: Optional[str] = None,
+    page: int = 1,
+    size: int = 10,
+    db: Session = Depends(get_db),
+):
+    page = max(page, 1)
+    size = max(size, 1)
+
+    query = db.query(Post)
+
+    if keyword and keyword.strip():
+        keyword_value = keyword.strip()
+        query = query.filter(
+            or_(
+                Post.title.ilike(f"%{keyword_value}%"),
+                Post.content.ilike(f"%{keyword_value}%"),
+            )
+        )
+
+    total = query.count()
     posts = (
-        db.query(Post)
-        .order_by(Post.created_at.desc(), Post.id.desc())
+        query.order_by(Post.created_at.desc(), Post.id.desc())
+        .offset((page - 1) * size)
+        .limit(size)
         .all()
     )
-    return posts
+
+    return {"items": posts, "total": total, "page": page, "size": size}
 
 
 @router.get("/{post_id}", response_model=PostOut)
@@ -63,15 +102,23 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 def create_post(payload: PostCreate, db: Session = Depends(get_db)):
     title = payload.title.strip()
     content = payload.content.strip()
+    category = payload.category.strip()
     password = payload.password.strip()
+    location_name = (payload.location_name or "").strip()
 
-    if not title or not content or not password:
+    if not title or not content or not category or not password:
         raise HTTPException(
             status_code=400,
-            detail="title, content, and password are required",
+            detail="title, content, category, and password are required",
         )
 
-    post = Post(title=title, content=content, password=password)
+    post = Post(
+        title=title,
+        content=content,
+        category=category,
+        location_name=location_name,
+        password=password,
+    )
     db.add(post)
     db.commit()
     db.refresh(post)
@@ -84,15 +131,34 @@ def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
 
+    if not payload.password.strip():
+        raise HTTPException(status_code=400, detail="password is required")
+
     if payload.password != post.password:
         raise HTTPException(status_code=403, detail="password mismatch")
 
     if payload.title is not None:
-        post.title = payload.title.strip() or post.title
+        title = payload.title.strip()
+        if not title:
+            raise HTTPException(status_code=400, detail="title is required")
+        post.title = title
 
     if payload.content is not None:
-        post.content = payload.content.strip() or post.content
+        content = payload.content.strip()
+        if not content:
+            raise HTTPException(status_code=400, detail="content is required")
+        post.content = content
 
+    if payload.category is not None:
+        category = payload.category.strip()
+        if not category:
+            raise HTTPException(status_code=400, detail="category is required")
+        post.category = category
+
+    if payload.location_name is not None:
+        post.location_name = payload.location_name.strip()
+
+    post.updated_at = datetime.now(timezone.utc)
     db.commit()
     db.refresh(post)
     return post
@@ -103,6 +169,9 @@ def delete_post(post_id: int, payload: PostDelete, db: Session = Depends(get_db)
     post = db.query(Post).filter(Post.id == post_id).first()
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
+
+    if not payload.password.strip():
+        raise HTTPException(status_code=400, detail="password is required")
 
     if payload.password != post.password:
         raise HTTPException(status_code=403, detail="password mismatch")
