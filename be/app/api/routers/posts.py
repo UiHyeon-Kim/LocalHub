@@ -57,6 +57,10 @@ class PostListResponse(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PasswordPayload(BaseModel):
+    password: Optional[str] = None
+
+
 def resolve_place_id(
     db: Session,
     place_id: Optional[int],
@@ -210,3 +214,17 @@ def delete_post(post_id: int, payload: PostDelete, db: Session = Depends(get_db)
     db.delete(post)
     db.commit()
     return None
+
+@router.post("/{post_id}/verify-password")
+def verify_post_password(post_id: int, payload: PasswordPayload, db: Session = Depends(get_db)):
+    post = db.query(Post).filter(Post.id == post_id).first()
+    if not post:
+        raise HTTPException(status_code=404, detail="post not found")
+
+    if payload.password is None or not payload.password.strip():
+        raise HTTPException(status_code=400, detail="password is required")
+
+    if payload.password != post.password:
+        raise HTTPException(status_code=403, detail="password mismatch")
+
+    return {"ok": True}
