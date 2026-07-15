@@ -27,17 +27,3 @@ if raw_database_url.startswith("sqlite:///./"):
     )
 else:
     DATABASE_URL = raw_database_url
-
-
-# OpenAI
-OPENAI_API_KEY = os.getenv("OPENAI_API_KEY", "")
-OPENAI_MODEL = os.getenv("OPENAI_MODEL", "gpt-5.5")
-OPENAI_MOCK_ENABLED = (
-    os.getenv("OPENAI_MOCK_ENABLED", "true").lower() == "true"
-)
-OPENAI_MAX_OUTPUT_TOKENS = int(
-    os.getenv("OPENAI_MAX_OUTPUT_TOKENS", "500")
-)
-OPENAI_TIMEOUT_SECONDS = float(
-    os.getenv("OPENAI_TIMEOUT_SECONDS", "20")
-)
