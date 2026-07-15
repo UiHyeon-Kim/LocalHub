@@ -1,12 +1,13 @@
-from typing import List, Optional
+from typing import Optional
 import math
 
 from fastapi import APIRouter, Depends, HTTPException
-from sqlalchemy import or_
+from sqlalchemy import or_, func
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
 from app.models.place import Place
+from app.models.post import Post
 
 router = APIRouter(prefix="/api/locations", tags=["locations"])
 
@@ -26,6 +27,54 @@ def map_place(place: Place) -> dict:
 
 def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
     return math.hypot(lat1 - lat2, lon1 - lon2)
+
+
+@router.get("/ranking")
+def get_location_ranking(limit: int = 5, db: Session = Depends(get_db)):
+    limit = max(1, min(limit, 100))
+    places = db.query(Place).all()
+
+    if not places:
+        return {"items": []}
+
+    explicit_counts = {
+        place_id: count
+        for place_id, count in db.query(Post.place_id, func.count(Post.id))
+        .filter(Post.place_id.isnot(None))
+        .group_by(Post.place_id)
+        .all()
+    }
+
+    title_to_id = {place.title: place.id for place in places}
+    fallback_counts = {}
+    for location_name, count in db.query(Post.location_name, func.count(Post.id)).filter(
+        Post.place_id.is_(None),
+        Post.location_name.isnot(None),
+        Post.location_name != "",
+    ).group_by(Post.location_name).all():
+        place_id = title_to_id.get(location_name)
+        if place_id:
+            fallback_counts[place_id] = fallback_counts.get(place_id, 0) + count
+
+    ranking = []
+    for place in places:
+        post_count = explicit_counts.get(place.id, 0) + fallback_counts.get(place.id, 0)
+        score = place.view_count + post_count
+        ranking.append((score, post_count, place))
+
+    ranking.sort(key=lambda item: (-item[0], -item[2].view_count, item[2].id))
+
+    items = [
+        {
+            **map_place(place),
+            "view_count": place.view_count,
+            "post_count": post_count,
+            "score": score,
+        }
+        for score, post_count, place in ranking[:limit]
+    ]
+
+    return {"items": items}
 
 
 @router.get("")
@@ -69,6 +118,10 @@ def get_location(location_id: int, db: Session = Depends(get_db)):
     place = db.query(Place).filter(Place.id == location_id).first()
     if not place:
         raise HTTPException(status_code=404, detail="location not found")
+
+    place.view_count += 1
+    db.commit()
+    db.refresh(place)
 
     return map_place(place)
 

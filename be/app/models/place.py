@@ -22,4 +22,8 @@ class Place(Base):
     firstimage2 = Column(Text, nullable=True)
     createdtime = Column(String(50), nullable=True)
     modifiedtime = Column(String(50), nullable=True)
+    view_count = Column(Integer, nullable=False, default=0, server_default="0")
     created_at = Column(DateTime(timezone=True), server_default=func.now())
+
+    # 새 컬럼: 콤마로 구분된 키워드 문자열 (예: "자연,산책,힐링")
+    keywords = Column(Text, nullable=True)

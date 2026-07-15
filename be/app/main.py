@@ -6,6 +6,7 @@ from app.api.routers.health import router as health_router
 from app.api.routers.import_data import router as import_router
 from app.api.routers.posts import router as posts_router
 from app.api.routers.locations import router as locations_router
+from app.api.routers.places import router as places_router
 from app.db.base import Base
 from app.db.session import engine
 
@@ -17,12 +18,9 @@ app = FastAPI(
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=[
-        "http://localhost:5173",
-        "http://127.0.0.1:5173",
-    ],
+    allow_origins=["http://localhost:5173"],
     allow_credentials=True,
-    allow_methods=["*"],
+    allow_methods=["GET", "POST", "PUT", "DELETE", "OPTIONS"],
     allow_headers=["*"],
 )
 
@@ -37,3 +35,4 @@ app.include_router(import_router)
 app.include_router(posts_router)
 app.include_router(chat_router)
 app.include_router(locations_router)
+app.include_router(places_router)

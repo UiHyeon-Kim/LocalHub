@@ -7,17 +7,19 @@ from sqlalchemy import or_
 from sqlalchemy.orm import Session
 
 from app.db.session import get_db
+from app.models.place import Place
 from app.models.post import Post
 
 router = APIRouter(prefix="/api/posts", tags=["posts"])
 
 
 class PostCreate(BaseModel):
-    title: str
-    content: str
-    category: str
+    title: Optional[str] = None
+    content: Optional[str] = None
+    category: Optional[str] = None
     location_name: Optional[str] = None
-    password: str
+    place_id: Optional[int] = None
+    password: Optional[str] = None
 
 
 class PostUpdate(BaseModel):
@@ -25,11 +27,12 @@ class PostUpdate(BaseModel):
     content: Optional[str] = None
     category: Optional[str] = None
     location_name: Optional[str] = None
-    password: str
+    place_id: Optional[int] = None
+    password: Optional[str] = None
 
 
 class PostDelete(BaseModel):
-    password: str
+    password: Optional[str] = None
 
 
 class PostOut(BaseModel):
@@ -52,6 +55,25 @@ class PostListResponse(BaseModel):
     size: int
 
     model_config = ConfigDict(from_attributes=True)
+
+
+def resolve_place_id(
+    db: Session,
+    place_id: Optional[int],
+    location_name: str,
+) -> Optional[int]:
+    if place_id is not None:
+        place = db.query(Place).filter(Place.id == place_id).first()
+        if not place:
+            raise HTTPException(status_code=400, detail="place_id not found")
+        return place_id
+
+    if location_name:
+        place = db.query(Place).filter(Place.title == location_name).first()
+        if place:
+            return place.id
+
+    return None
 
 
 @router.get("", response_model=PostListResponse)
@@ -100,10 +122,10 @@ def get_post(post_id: int, db: Session = Depends(get_db)):
 
 @router.post("", response_model=PostOut, status_code=status.HTTP_201_CREATED)
 def create_post(payload: PostCreate, db: Session = Depends(get_db)):
-    title = payload.title.strip()
-    content = payload.content.strip()
-    category = payload.category.strip()
-    password = payload.password.strip()
+    title = (payload.title or "").strip()
+    content = (payload.content or "").strip()
+    category = (payload.category or "").strip()
+    password = (payload.password or "").strip()
     location_name = (payload.location_name or "").strip()
 
     if not title or not content or not category or not password:
@@ -112,11 +134,14 @@ def create_post(payload: PostCreate, db: Session = Depends(get_db)):
             detail="title, content, category, and password are required",
         )
 
+    place_id = resolve_place_id(db, payload.place_id, location_name)
+
     post = Post(
         title=title,
         content=content,
         category=category,
         location_name=location_name,
+        place_id=place_id,
         password=password,
     )
     db.add(post)
@@ -131,7 +156,7 @@ def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
 
-    if not payload.password.strip():
+    if payload.password is None or not payload.password.strip():
         raise HTTPException(status_code=400, detail="password is required")
 
     if payload.password != post.password:
@@ -156,7 +181,13 @@ def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)
         post.category = category
 
     if payload.location_name is not None:
-        post.location_name = payload.location_name.strip()
+        location_name = payload.location_name.strip()
+        if not location_name:
+            raise HTTPException(status_code=400, detail="location_name is required")
+        post.location_name = location_name
+        post.place_id = resolve_place_id(db, payload.place_id, location_name)
+    elif payload.place_id is not None:
+        post.place_id = resolve_place_id(db, payload.place_id, post.location_name)
 
     post.updated_at = datetime.now(timezone.utc)
     db.commit()
@@ -170,7 +201,7 @@ def delete_post(post_id: int, payload: PostDelete, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
 
-    if not payload.password.strip():
+    if payload.password is None or not payload.password.strip():
         raise HTTPException(status_code=400, detail="password is required")
 
     if payload.password != post.password:
