@@ -33,6 +33,6 @@ def startup() -> None:
 app.include_router(health_router)
 app.include_router(import_router)
 app.include_router(posts_router)
-app.include_router(chat_router)
 app.include_router(locations_router)
 app.include_router(places_router)
+app.include_router(chat_router)
