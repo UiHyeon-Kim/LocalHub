@@ -42,21 +42,41 @@ export const mapPlace = (rawPlace) => {
 
   return {
     id: place.id,
-    name: place.name || '',
-    category: place.category || '',
-    shortDescription: place.shortDescription || '',
+    name: place.name || place.title || '',
+    category: place.category || place.contentType || '',
+    shortDescription:
+      place.shortDescription ||
+      place.address ||
+      place.addr1 ||
+      '',
     description: place.description || '',
-    address: place.address || '',
-    phone: place.phone || null,
+    address: place.address || place.addr1 || '',
+    phone: place.phone || place.tel || null,
     operatingHours: place.operatingHours || null,
     fee: place.fee || null,
-    latitude: parseCoordinate(place.latitude),
-    longitude: parseCoordinate(place.longitude),
-    imageUrl: place.imageUrl || null,
+    latitude: parseCoordinate(
+      place.latitude ?? place.mapy,
+    ),
+    longitude: parseCoordinate(
+      place.longitude ?? place.mapx,
+    ),
+    imageUrl:
+      place.imageUrl ||
+      place.firstimage ||
+      place.firstimage2 ||
+      null,
     district: place.district || '',
-    tags: Array.isArray(place.tags) ? place.tags : [],
-    recommendedFor: Array.isArray(place.recommendedFor) ? place.recommendedFor : [],
-    highlights: Array.isArray(place.highlights) ? place.highlights : []
+    distanceKm:
+      place.distanceKm ?? null,
+    tags: Array.isArray(place.tags)
+      ? place.tags
+      : [],
+    recommendedFor: Array.isArray(place.recommendedFor)
+      ? place.recommendedFor
+      : [],
+    highlights: Array.isArray(place.highlights)
+      ? place.highlights
+      : [],
   }
 }
 
