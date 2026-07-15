@@ -1,41 +1,27 @@
-from typing import Optional
+from typing import Any, List
 
-from fastapi import APIRouter, Body, HTTPException, status
+from fastapi import APIRouter, Depends, HTTPException
+from pydantic import BaseModel, Field
+from sqlalchemy.orm import Session
 
-from app.core.config import OPENAI_MOCK_ENABLED, OPENAI_MODEL
-from app.schemas.chat import ChatResponse
-from app.services.openai_service import OpenAIService, OpenAIServiceError
+from app.ai.chat_bot import generate_chat_answer
+from app.db.session import get_db
 
-router = APIRouter(
-    prefix="/api/chat",
-    tags=["AI Chat"],
-)
+router = APIRouter(prefix="/api/chat", tags=["chat"])
 
 
-@router.post(
-    "",
-    response_model=ChatResponse,
-    summary="LocalHub AI 질문",
-)
-def create_chat_response(
-    payload: Optional[dict] = Body(default=None),
-) -> ChatResponse:
-    if not isinstance(payload, dict):
-        raise HTTPException(status_code=400, detail="request body is required")
+class ChatRequest(BaseModel):
+    message: str
+    history: List[Any] = Field(default_factory=list)
 
-    message = payload.get("message")
-    if not isinstance(message, str) or not message.strip():
+
+@router.post("")
+def chat(request: ChatRequest, db: Session = Depends(get_db)):
+    if not request.message or not request.message.strip():
         raise HTTPException(status_code=400, detail="message is required")
 
-    service = OpenAIService()
+    result = generate_chat_answer(db, request.message, request.history)
+    if result is None:
+        raise HTTPException(status_code=400, detail="message is required")
 
-    try:
-        answer = service.generate_answer(message.strip())
-    except OpenAIServiceError:
-        answer = "현재 제공된 데이터에서는 확인되지 않습니다."
-
-    return ChatResponse(
-        answer=answer,
-        model=OPENAI_MODEL,
-        is_mock=OPENAI_MOCK_ENABLED,
-    )
+    return result
