@@ -15,8 +15,8 @@
           to="/posts"
           class="ml-auto inline-flex items-center gap-2 rounded-full bg-[var(--color-primary)] px-5 py-3 text-sm font-semibold text-white transition hover:bg-[var(--color-secondary)]"
         >
-          커뮤니티 전체보기
-          <span>→</span>
+          <span class="text-white">커뮤니티 전체보기</span>
+          <span class="text-white">→</span>
         </RouterLink>
       </div>
 

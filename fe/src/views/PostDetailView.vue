@@ -1,63 +1,118 @@
 <template>
-  <div v-if="post" class="min-h-screen bg-[var(--color-background)]">
-    <!-- 게시글 컨테이너 -->
-    <div class="page-container page-section">
-      <div class="mx-auto max-w-3xl">
-        <!-- 뒤로가기 버튼 -->
-        <RouterLink
-          to="/posts"
-          class="mb-6 inline-flex items-center gap-2 text-[var(--color-primary)] font-medium hover:gap-3 transition-all"
-        >
-          ← 목록으로 돌아가기
-        </RouterLink>
+  <div
+    v-if="post"
+    class="min-h-screen bg-[var(--color-background)]"
+  >
+    <main class="py-10 md:py-14">
+      <div class="page-container">
+        <div class="mx-auto max-w-4xl">
+          <!-- 목록으로 돌아가기 -->
+          <RouterLink
+            to="/posts"
+            class="mb-7 inline-flex items-center gap-2 text-sm font-semibold !text-[var(--color-text)] transition hover:gap-3 hover:!text-[var(--color-primary)]"
+          >
+            <span aria-hidden="true">←</span>
+            목록으로 돌아가기
+          </RouterLink>
 
-        <!-- 게시글 헤더 -->
-        <div class="rounded-lg border border-[var(--color-border)] bg-white p-8">
-          <!-- 카테고리 -->
-          <div class="mb-4">
-            <span class="inline-block rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
-              {{ post.category }}
-            </span>
-          </div>
+          <!-- 게시글 -->
+          <article
+            class="rounded-[20px] border border-[var(--color-border)] bg-white px-8 py-8 shadow-sm md:px-10 md:py-10"
+          >
+            <!-- 상단 정보 -->
+            <div class="relative">
+              <div class="pr-12">
+                <!-- 카테고리 -->
+                <span
+                  class="inline-flex items-center rounded-[8px] bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700"
+                >
+                  {{ post.category }}
+                </span>
 
-          <!-- 제목 -->
-          <h1 class="text-4xl font-bold text-[var(--color-text)]">
-            {{ post.title }}
-          </h1>
+                <!-- 제목 -->
+                <h1
+                  class="mt-5 break-keep text-3xl font-bold leading-tight text-[var(--color-text)] md:text-4xl"
+                >
+                  {{ post.title }}
+                </h1>
+              </div>
 
-          <!-- 메타 정보 -->
-          <div class="mt-6 flex items-center gap-6 border-b border-[var(--color-border)] pb-6 text-sm text-[var(--color-text-muted)]">
-            <div>작성일: {{ formatDateTime(post.createdAt) }}</div>
-            <div v-if="post.updatedAt">수정됨: {{ formatDateTime(post.updatedAt) }}</div>
-            <div>조회수: {{ post.viewCount }}</div>
-            <div v-if="post.locationName">📍 {{ post.locationName }}</div>
-          </div>
+              <!-- 더보기 메뉴 -->
+              <div
+                ref="menuRef"
+                class="absolute right-0 top-0"
+              >
+                <button
+                  type="button"
+                  aria-label="게시글 관리 메뉴"
+                  :aria-expanded="isMenuOpen"
+                  class="flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+                  @click.stop="toggleMenu"
+                >
+                  ⋮
+                </button>
 
-          <!-- 컨트롤 버튼 -->
-          <div class="mt-6 flex gap-3">
-            <button
-              @click="showEditPasswordModal = true"
-              class="rounded-lg border-2 border-[var(--color-primary)] px-4 py-2 font-semibold text-[var(--color-primary)] transition-all hover:bg-[var(--color-primary)] hover:text-white"
+                <div
+                  v-if="isMenuOpen"
+                  class="absolute right-0 top-12 z-20 w-28 overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-white py-1 shadow-lg"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
+                    @click="openEditModal"
+                  >
+                    수정
+                  </button>
+
+                  <button
+                    type="button"
+                    class="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-red-500 transition hover:bg-red-50"
+                    @click="openDeleteModal"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
+            </div>
+
+            <!-- 메타 정보 -->
+            <div
+              class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[var(--color-text-muted)]"
             >
-              수정
-            </button>
-            <button
-              @click="showDeletePasswordModal = true"
-              class="rounded-lg border-2 border-red-500 px-4 py-2 font-semibold text-red-500 transition-all hover:bg-red-500 hover:text-white"
-            >
-              삭제
-            </button>
-          </div>
-        </div>
+              <span>
+                작성일: {{ formatDateTime(post.createdAt) }}
+              </span>
 
-        <!-- 본문 -->
-        <div class="mt-8 rounded-lg border border-[var(--color-border)] bg-white p-8">
-          <div class="prose prose-sm max-w-none whitespace-pre-wrap text-lg leading-relaxed text-[var(--color-text)]">
-            {{ post.content }}
-          </div>
+              <span v-if="post.updatedAt">
+                수정됨: {{ formatDateTime(post.updatedAt) }}
+              </span>
+
+              <span>
+                조회수: {{ post.viewCount ?? 0 }}
+              </span>
+
+              <span
+                v-if="post.locationName"
+                class="inline-flex items-center gap-1"
+              >
+                <span aria-hidden="true">📍</span>
+                {{ post.locationName }}
+              </span>
+            </div>
+
+            <!-- 구분선 -->
+            <div class="my-8 border-t border-[var(--color-border)]"></div>
+
+            <!-- 본문 -->
+            <p
+              class="min-h-[120px] whitespace-pre-wrap break-words text-base leading-8 text-[var(--color-text)]"
+            >
+              {{ post.content }}
+            </p>
+          </article>
         </div>
       </div>
-    </div>
+    </main>
 
     <!-- 수정 비밀번호 모달 -->
     <PasswordModal
@@ -67,7 +122,7 @@
       confirm-text="인증"
       :loading="editLoading"
       :error-message="editError"
-      @close="showEditPasswordModal = false"
+      @close="closeEditModal"
       @confirm="handleEditPassword"
     />
 
@@ -79,23 +134,36 @@
       confirm-text="삭제"
       :loading="deleteLoading"
       :error-message="deleteError"
-      @close="showDeletePasswordModal = false"
+      @close="closeDeleteModal"
       @confirm="handleDeletePassword"
     />
   </div>
 
   <!-- Not Found -->
-  <div v-else class="flex h-screen items-center justify-center bg-[var(--color-background)]">
-    <div class="text-center">
-      <h1 class="text-4xl font-bold text-[var(--color-text)]">
+  <div
+    v-else
+    class="flex min-h-screen items-center justify-center bg-[var(--color-background)] px-6"
+  >
+    <div
+      class="w-full max-w-lg rounded-[24px] border border-[var(--color-border)] bg-white px-8 py-14 text-center shadow-sm"
+    >
+      <div
+        class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-2xl"
+      >
+        📝
+      </div>
+
+      <h1 class="mt-6 text-3xl font-bold text-[var(--color-text)]">
         게시글을 찾을 수 없습니다
       </h1>
-      <p class="mt-4 text-[var(--color-text-muted)]">
+
+      <p class="mt-3 text-sm leading-7 text-[var(--color-text-muted)]">
         요청하신 게시글이 없거나 삭제되었습니다.
       </p>
+
       <RouterLink
         to="/posts"
-        class="mt-8 inline-block rounded-lg bg-[var(--color-primary)] px-6 py-3 text-white font-semibold transition-all hover:bg-[var(--color-primary-hover)]"
+        class="mt-8 inline-flex h-12 items-center justify-center rounded-[14px] bg-[var(--color-primary)] px-6 text-sm font-semibold !text-white transition hover:bg-[var(--color-primary-hover)]"
       >
         목록으로 돌아가기
       </RouterLink>
@@ -104,33 +172,104 @@
 </template>
 
 <script setup>
-import { ref, computed } from 'vue'
+import {
+  computed,
+  onBeforeUnmount,
+  onMounted,
+  ref,
+} from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getPostById, verifyPostPassword, deleteMockPost } from '@/data/mockPosts'
+
 import PasswordModal from '@/components/post/PasswordModal.vue'
+import {
+  deleteMockPost,
+  getPostById,
+  verifyPostPassword,
+} from '@/data/mockPosts'
 
 const route = useRoute()
 const router = useRouter()
 
-const postId = route.params.id
-const post = computed(() => getPostById(postId))
+const postId = computed(() => String(route.params.id))
+const post = computed(() => getPostById(postId.value))
+
+const menuRef = ref(null)
+const isMenuOpen = ref(false)
 
 const showEditPasswordModal = ref(false)
 const showDeletePasswordModal = ref(false)
+
 const editLoading = ref(false)
 const editError = ref('')
+
 const deleteLoading = ref(false)
 const deleteError = ref('')
 
 const formatDateTime = (dateString) => {
+  if (!dateString) {
+    return '-'
+  }
+
   const date = new Date(dateString)
-  return date.toLocaleDateString('ko-KR', {
+
+  if (Number.isNaN(date.getTime())) {
+    return dateString
+  }
+
+  return date.toLocaleString('ko-KR', {
     year: 'numeric',
     month: '2-digit',
     day: '2-digit',
     hour: '2-digit',
-    minute: '2-digit'
+    minute: '2-digit',
   })
+}
+
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value
+}
+
+const closeMenu = () => {
+  isMenuOpen.value = false
+}
+
+const handleOutsideClick = (event) => {
+  if (
+    menuRef.value &&
+    !menuRef.value.contains(event.target)
+  ) {
+    closeMenu()
+  }
+}
+
+const openEditModal = () => {
+  closeMenu()
+  editError.value = ''
+  showEditPasswordModal.value = true
+}
+
+const closeEditModal = () => {
+  if (editLoading.value) {
+    return
+  }
+
+  editError.value = ''
+  showEditPasswordModal.value = false
+}
+
+const openDeleteModal = () => {
+  closeMenu()
+  deleteError.value = ''
+  showDeletePasswordModal.value = true
+}
+
+const closeDeleteModal = () => {
+  if (deleteLoading.value) {
+    return
+  }
+
+  deleteError.value = ''
+  showDeletePasswordModal.value = false
 }
 
 const handleEditPassword = async (password) => {
@@ -138,12 +277,23 @@ const handleEditPassword = async (password) => {
   editError.value = ''
 
   try {
-    verifyPostPassword(postId, password)
-    sessionStorage.setItem(`localhub-post-edit-${postId}`, 'verified')
+    verifyPostPassword(postId.value, password)
+
+    sessionStorage.setItem(
+      `localhub-post-edit-${postId.value}`,
+      'verified',
+    )
+
     showEditPasswordModal.value = false
-    await router.push(`/posts/${postId}/edit`)
+
+    await router.push(
+      `/posts/${postId.value}/edit`,
+    )
   } catch (error) {
-    editError.value = error.message
+    editError.value =
+      error instanceof Error
+        ? error.message
+        : '비밀번호 확인에 실패했습니다.'
   } finally {
     editLoading.value = false
   }
@@ -154,19 +304,26 @@ const handleDeletePassword = async (password) => {
   deleteError.value = ''
 
   try {
-    deleteMockPost(postId, password)
+    deleteMockPost(postId.value, password)
+
     showDeletePasswordModal.value = false
+
     await router.push('/posts')
   } catch (error) {
-    deleteError.value = error.message
+    deleteError.value =
+      error instanceof Error
+        ? error.message
+        : '게시글 삭제에 실패했습니다.'
   } finally {
     deleteLoading.value = false
   }
 }
-</script>
 
-<style scoped>
-.prose {
-  all: unset;
-}
-</style>
+onMounted(() => {
+  document.addEventListener('click', handleOutsideClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
+</script>

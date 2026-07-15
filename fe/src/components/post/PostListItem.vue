@@ -1,54 +1,79 @@
 <template>
-  <RouterLink :to="`/posts/${post.id}`" class="block border-b border-[var(--color-border)] last:border-b-0">
-    <div class="flex items-center gap-4 py-4 px-0 transition-colors hover:bg-gray-50">
-      <!-- 카테고리 -->
-      <div class="flex-shrink-0 w-16">
-        <span class="inline-block rounded-md bg-blue-50 px-3 py-1 text-sm font-medium text-blue-700">
+  <RouterLink
+    :to="`/posts/${post.id}`"
+    class="block border-b border-[var(--color-border)] px-5 py-4 transition last:border-b-0 hover:bg-[var(--color-surface-muted)] md:px-6"
+  >
+    <article class="flex items-start justify-between gap-5 md:gap-8">
+      <!-- 왼쪽: 카테고리와 게시글 정보 -->
+      <div class="flex min-w-0 flex-1 items-start gap-4">
+        <span
+          class="flex-shrink-0 rounded-[8px] bg-blue-50 px-2.5 py-1.5 text-xs font-semibold text-blue-600"
+        >
           {{ post.category }}
         </span>
-      </div>
 
-      <!-- 제목 -->
-      <div class="flex-1 min-w-0">
-        <h3 class="font-semibold text-[var(--color-text)] line-clamp-1 text-base">
-          {{ post.title }}
-        </h3>
-        <div v-if="post.locationName" class="mt-1 text-sm text-[var(--color-text-muted)]">
-          📍 {{ post.locationName }}
+        <div class="min-w-0 flex-1">
+          <h2
+            class="truncate text-sm font-semibold text-[var(--color-text)] md:text-base"
+          >
+            {{ post.title }}
+          </h2>
+
+          <p
+            v-if="post.location"
+            class="mt-2 truncate text-xs text-[var(--color-text-muted)]"
+          >
+            <span class="mr-1 text-pink-500">●</span>
+            {{ post.location }}
+          </p>
         </div>
       </div>
 
-      <!-- 메타 정보 -->
-      <div class="flex-shrink-0 text-right text-sm text-[var(--color-text-muted)] space-y-1">
-        <div>{{ formatDate(post.createdAt) }}</div>
-        <div>조회 {{ post.viewCount }}</div>
+      <!-- 오른쪽: 날짜와 조회 수 -->
+      <div
+        class="flex flex-shrink-0 flex-col items-end gap-1 pl-3 text-right text-xs text-[var(--color-text-muted)]"
+      >
+        <time :datetime="post.createdAt">
+          {{ displayDate }}
+        </time>
+
+        <span>
+          조회 {{ post.views ?? 0 }}
+        </span>
       </div>
-    </div>
+    </article>
   </RouterLink>
 </template>
 
 <script setup>
-defineProps({
+import { computed } from 'vue'
+
+const props = defineProps({
   post: {
     type: Object,
-    required: true
-  }
+    required: true,
+  },
 })
 
-const formatDate = (dateString) => {
-  const date = new Date(dateString)
-  const today = new Date()
-  const yesterday = new Date(today)
-  yesterday.setDate(yesterday.getDate() - 1)
+const displayDate = computed(() => {
+  const rawDate =
+    props.post.createdAt ??
+    props.post.date ??
+    ''
 
-  if (date.toDateString() === today.toDateString()) {
-    return date.toLocaleTimeString('ko-KR', { hour: '2-digit', minute: '2-digit' })
+  if (!rawDate) {
+    return ''
   }
 
-  if (date.toDateString() === yesterday.toDateString()) {
-    return '어제'
+  const date = new Date(rawDate)
+
+  if (Number.isNaN(date.getTime())) {
+    return rawDate
   }
 
-  return date.toLocaleDateString('ko-KR', { month: 'short', day: 'numeric' })
-}
+  return new Intl.DateTimeFormat('ko-KR', {
+    month: 'long',
+    day: 'numeric',
+  }).format(date)
+})
 </script>
