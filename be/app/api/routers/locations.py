@@ -29,6 +29,48 @@ def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> fl
     return math.hypot(lat1 - lat2, lon1 - lon2)
 
 
+def build_description(place: Place) -> str:
+    title = place.title or "이 지역의 장소"
+    category = place.content_type or "명소"
+    address = place.addr1 or "구미·경북 지역"
+
+    return (
+        f"{title}는 {category}로, {address}에 위치한 곳입니다. "
+        "지역의 분위기와 함께 둘러보기 좋은 추천 장소입니다."
+    )
+
+
+def map_place(place: Place) -> dict:
+    return {
+        "id": place.id,
+        "name": place.title,
+        "category": place.content_type,
+        "address": place.addr1,
+        "phone": place.tel,
+        "latitude": place.latitude,
+        "longitude": place.longitude,
+        "image_url": place.firstimage,
+        "description": build_description(place),
+        "short_description": build_description(place),
+        "distance_km": None,
+    }
+
+
+def calculate_distance(lat1: float, lon1: float, lat2: float, lon2: float) -> float:
+    radius_km = 6371.0
+    phi1 = math.radians(lat1)
+    phi2 = math.radians(lat2)
+    dphi = math.radians(lat2 - lat1)
+    dlambda = math.radians(lon2 - lon1)
+
+    a = (
+        math.sin(dphi / 2) ** 2
+        + math.cos(phi1) * math.cos(phi2) * math.sin(dlambda / 2) ** 2
+    )
+    c = 2 * math.atan2(math.sqrt(a), math.sqrt(1 - a))
+    return radius_km * c
+
+
 @router.get("/ranking")
 def get_location_ranking(limit: int = 5, db: Session = Depends(get_db)):
     limit = max(1, min(limit, 100))
@@ -100,8 +142,21 @@ def list_locations(
             )
         )
 
+    def normalize_category(value: str) -> str:
+        if not value:
+            return ""
+        normalized = value.strip()
+        aliases = {
+            "축제·행사": "축제공연행사",
+            "축제행사": "축제공연행사",
+            "여행 코스": "여행코스",
+            "여행코스": "여행코스",
+        }
+        return aliases.get(normalized, normalized)
+
     if category and category.strip():
-        query = query.filter(Place.content_type == category.strip())
+        normalized_category = normalize_category(category)
+        query = query.filter(Place.content_type == normalized_category)
 
     if district and district.strip():
         district_value = f"%{district.strip()}%"
@@ -130,14 +185,24 @@ def get_location(location_id: int, db: Session = Depends(get_db)):
 def get_location_nearby(
     location_id: int,
     limit: int = 3,
+    lat: Optional[float] = None,
+    lon: Optional[float] = None,
     db: Session = Depends(get_db),
 ):
     place = db.query(Place).filter(Place.id == location_id).first()
     if not place:
         raise HTTPException(status_code=404, detail="location not found")
 
-    if place.latitude is None or place.longitude is None:
-        return []
+    reference_lat = lat
+    reference_lon = lon
+
+    if reference_lat is None or reference_lon is None:
+        if place.latitude is not None and place.longitude is not None:
+            reference_lat = place.latitude
+            reference_lon = place.longitude
+        else:
+            reference_lat = 36.1173
+            reference_lon = 128.3440
 
     nearby_places = (
         db.query(Place)
@@ -151,11 +216,25 @@ def get_location_nearby(
 
     nearby_places.sort(
         key=lambda other: calculate_distance(
-            place.latitude,
-            place.longitude,
+            reference_lat,
+            reference_lon,
             other.latitude,
             other.longitude,
         )
     )
 
-    return [map_place(other) for other in nearby_places[: max(1, limit)]]
+    result = []
+    for other in nearby_places[: max(1, limit)]:
+        mapped = map_place(other)
+        mapped["distance_km"] = round(
+            calculate_distance(
+                reference_lat,
+                reference_lon,
+                other.latitude,
+                other.longitude,
+            ),
+            1,
+        )
+        result.append(mapped)
+
+    return result

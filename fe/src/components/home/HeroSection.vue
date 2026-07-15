@@ -31,7 +31,7 @@
               v-model="searchQuery"
               @keyup.enter="handleSearch"
               type="text"
-              placeholder="장소, 주소, 분위기 검색..."
+              placeholder="장소 또는 주소 검색"
               class="h-14 w-full rounded-[14px] border border-white/20 bg-white/10 px-14 text-base text-white placeholder:text-white/60 outline-none transition focus:border-white/40 focus:ring-2 focus:ring-white/20"
             />
           </div>
@@ -70,7 +70,7 @@ import { heroBackgroundImage } from '@/data/homeMockData'
 const router = useRouter()
 const searchQuery = ref('')
 
-const recommendedKeywords = ['금오산', '낙동강', '문화시설', '가족 나들이']
+const recommendedKeywords = ['금오산', '낙동강', '공원', '미술관']
 
 const goToPlaces = (keyword) => {
   if (!keyword || !keyword.trim()) return

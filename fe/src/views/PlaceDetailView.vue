@@ -138,6 +138,30 @@ const nearbyPlaces = ref([])
 const loading = ref(false)
 const error = ref('')
 
+const DEFAULT_NEARBY_REFERENCE = { lat: 36.1173, lon: 128.3440 }
+
+const getNearbyReference = async () => {
+  if ('geolocation' in navigator) {
+    try {
+      const position = await new Promise((resolve, reject) => {
+        navigator.geolocation.getCurrentPosition(resolve, reject, {
+          enableHighAccuracy: false,
+          timeout: 4000,
+        })
+      })
+
+      return {
+        lat: position.coords.latitude,
+        lon: position.coords.longitude,
+      }
+    } catch {
+      return DEFAULT_NEARBY_REFERENCE
+    }
+  }
+
+  return DEFAULT_NEARBY_REFERENCE
+}
+
 const loadPlace = async () => {
   const placeId = route.params.id
 
@@ -150,7 +174,8 @@ const loadPlace = async () => {
     place.value = await getPlace(placeId)
 
     try {
-      nearbyPlaces.value = await getNearbyPlaces(placeId, 3)
+      const reference = await getNearbyReference()
+      nearbyPlaces.value = await getNearbyPlaces(placeId, 3, reference)
     } catch {
       nearbyPlaces.value = []
     }

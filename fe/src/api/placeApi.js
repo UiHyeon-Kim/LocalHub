@@ -71,17 +71,20 @@ export const getPlace = async (placeId) => {
 /**
  * 주변 장소 조회
  * GET /api/locations/{id}/nearby?limit={limit}
- *
- * 주의: 이 API가 백엔드에 구현되지 않았을 수 있습니다.
  */
-export const getNearbyPlaces = async (placeId, limit = 3) => {
+export const getNearbyPlaces = async (placeId, limit = 3, reference = null) => {
   if (!placeId) {
     throw new Error('장소 ID가 필요합니다.')
   }
 
-  const response = await http.get(`/api/locations/${placeId}/nearby`, {
-    params: { limit }
-  })
+  const params = { limit }
+
+  if (reference && typeof reference.lat === 'number' && typeof reference.lon === 'number') {
+    params.lat = reference.lat
+    params.lon = reference.lon
+  }
+
+  const response = await http.get(`/api/locations/${placeId}/nearby`, { params })
 
   let places = []
 

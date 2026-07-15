@@ -19,8 +19,8 @@
 
       <div class="mt-4 flex gap-2">
         <a
-          v-if="place.latitude && place.longitude"
-          :href="`https://www.openstreetmap.org/?mlat=${place.latitude}&mlon=${place.longitude}&zoom=15`"
+          v-if="destinationUrl"
+          :href="destinationUrl"
           target="_blank"
           rel="noopener noreferrer"
           class="flex-1 rounded-lg bg-[var(--color-primary)] px-4 py-3 text-center text-white font-semibold hover:bg-[var(--color-primary-hover)]"
@@ -28,19 +28,34 @@
           길찾기
         </a>
 
-        <button class="rounded-lg border px-4 py-3 text-sm text-[var(--color-text)] bg-white">공유 위치</button>
+        <button class="rounded-lg border px-4 py-3 text-sm text-[var(--color-text)] bg-white">
+          공유 위치
+        </button>
       </div>
     </div>
 
-    <RouterLink to="/" class="block rounded-lg border border-[var(--color-border)] bg-white px-4 py-3 text-center text-[var(--color-text)] font-semibold shadow-sm">
+    <RouterLink
+      to="/"
+      class="block rounded-lg border border-[var(--color-border)] bg-white px-4 py-3 text-center text-[var(--color-text)] font-semibold shadow-sm"
+    >
       목록으로 돌아가기
     </RouterLink>
   </div>
 </template>
 
 <script setup>
+import { computed } from 'vue'
 import PlaceMap from '@/components/place/PlaceMap.vue'
-defineProps({
-  place: { type: Object, required: true }
+
+const props = defineProps({
+  place: { type: Object, required: true },
+})
+
+const destinationUrl = computed(() => {
+  if (!props.place?.latitude || !props.place?.longitude) {
+    return ''
+  }
+
+  return `https://www.openstreetmap.org/?mlat=${props.place.latitude}&mlon=${props.place.longitude}&zoom=15`
 })
 </script>

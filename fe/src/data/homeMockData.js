@@ -45,7 +45,7 @@ export const moods = [
     id: 'mood-2',
     title: '비 오는 날의 실내 나들이',
     description: '날씨 상관없이 즐길 수 있는 곳들',
-    imageUrl: 'https://images.unsplash.com/photo-1549887534-f3d0c2a27c4a?w=800&h=600&fit=crop',
+    imageUrl: 'https://images.unsplash.com/photo-1507027682794-35e6c12ad5b4?q=80&w=687&auto=format&fit=crop',
     category: '실내·문화'
   },
   {
