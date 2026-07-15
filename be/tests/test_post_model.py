@@ -17,9 +17,12 @@ class PostModelTest(unittest.TestCase):
         self.assertIn("id", column_names)
         self.assertIn("title", column_names)
         self.assertIn("content", column_names)
+        self.assertIn("category", column_names)
+        self.assertIn("location_name", column_names)
         self.assertIn("password", column_names)
         self.assertIn("view_count", column_names)
         self.assertIn("created_at", column_names)
+        self.assertIn("updated_at", column_names)
 
     def test_post_model_is_registered_in_metadata(self):
         self.assertIn("posts", Base.metadata.tables)
