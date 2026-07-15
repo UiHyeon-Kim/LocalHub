@@ -31,24 +31,109 @@ def normalize_history(history: List[Any]) -> List[str]:
     return items
 
 
-def search_places(db: Session, message: str, limit: int = 5) -> List[Place]:
-    tokens = [token for token in re.split(r"[\s,]+", message.strip()) if token]
-    if not tokens:
+def tokenize_message(message: str) -> List[str]:
+    normalized = re.sub(r"[\s,]+", " ", message.strip())
+    return [token for token in normalized.lower().split(" ") if token]
+
+
+def expand_search_tokens(message: str) -> List[str]:
+    synonym_map = {
+        "가족": ["가족", "아이", "어린이", "부모님"],
+        "아이": ["아이", "어린이", "가족", "유아"],
+        "어린이": ["어린이", "아이", "가족"],
+        "산책": ["산책", "걷기", "공원", "자연"],
+        "비오는": ["비오는", "우천", "실내", "실내장소"],
+        "실내": ["실내", "우천", "체험", "전시"],
+        "축제": ["축제", "행사", "공연", "페스티벌"],
+        "구미": ["구미", "구미시", "경북 구미"],
+        "데이트": ["데이트", "로맨틱", "커플", "야경"],
+    }
+
+    tokens = tokenize_message(message)
+    expanded: List[str] = []
+
+    for token in tokens:
+        expanded.append(token)
+        for key, synonyms in synonym_map.items():
+            if key in token or token in synonyms:
+                expanded.extend(synonyms)
+
+    unique_tokens = []
+    for token in expanded:
+        token = token.strip()
+        if token and token not in unique_tokens:
+            unique_tokens.append(token)
+
+    return unique_tokens
+
+
+def compute_match_score(place: Place, message: str, direct_tokens: List[str], expanded_tokens: List[str]) -> int:
+    score = 0
+    message_lower = message.lower()
+    direct_token_set = set(direct_tokens)
+    expanded_token_set = set(expanded_tokens)
+
+    field_weights = {
+        "title": 20,
+        "addr1": 15,
+        "content_type": 10,
+        "keywords": 25,
+    }
+
+    for field_name, weight in field_weights.items():
+        value = getattr(place, field_name) or ""
+        value_lower = value.lower()
+
+        if message_lower and message_lower in value_lower:
+            score += weight * 3
+
+        for token in direct_token_set:
+            if token in value_lower:
+                score += weight
+        for token in expanded_token_set - direct_token_set:
+            if token in value_lower:
+                score += max(2, weight // 4)
+
+    return score
+
+
+def search_places(db: Session, message: str, limit: int = 10) -> List[Place]:
+    message = message or ""
+    if not message.strip():
         return []
 
+    direct_tokens = tokenize_message(message)
+    if not direct_tokens:
+        return []
+
+    expanded_tokens = expand_search_tokens(message)
+    search_tokens = list(dict.fromkeys(direct_tokens + expanded_tokens))
+    patterns = [f"%{token}%" for token in search_tokens]
+
     filters = []
-    for token in tokens:
-        pattern = f"%{token}%"
+    for pattern in patterns:
         filters.append(
             or_(
                 Place.title.ilike(pattern),
                 Place.addr1.ilike(pattern),
                 Place.content_type.ilike(pattern),
+                Place.keywords.ilike(pattern),
             )
         )
 
-    query = db.query(Place).filter(or_(*filters))
-    return query.order_by(Place.id).limit(limit).all()
+    candidates = db.query(Place).filter(or_(*filters)).all()
+    scored: List[tuple[int, Place]] = []
+
+    for place in candidates:
+        score = compute_match_score(place, message, direct_tokens, expanded_tokens)
+        if score >= 20:
+            scored.append((score, place))
+
+    if not scored:
+        return []
+
+    scored.sort(key=lambda item: item[0], reverse=True)
+    return [place for _, place in scored[:limit]]
 
 
 def build_prompt(message: str, history: List[str], places: List[Place]) -> str:
@@ -57,7 +142,7 @@ def build_prompt(message: str, history: List[str], places: List[Place]) -> str:
     place_context_lines = []
     for place in places:
         place_context_lines.append(
-            f"- id={place.id}, title={place.title}, addr1={place.addr1 or '-'}, content_type={place.content_type or '-'}"
+            f"- id={place.id}, title={place.title}, addr1={place.addr1 or '-'}, category={place.content_type or '-'}, keywords={place.keywords or '-'}"
         )
 
     return f"""
@@ -117,6 +202,7 @@ def generate_chat_answer(db: Session, message: str, history: List[Any]):
             raise RuntimeError("empty")
     except Exception as exc:
         import traceback
+
         print("OpenAI error:", repr(exc))
         traceback.print_exc()
         return {

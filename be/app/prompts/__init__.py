@@ -1,0 +1,3 @@
+from .localhub_chat import LOCALHUB_CHAT_INSTRUCTIONS
+
+__all__ = ["LOCALHUB_CHAT_INSTRUCTIONS"]
