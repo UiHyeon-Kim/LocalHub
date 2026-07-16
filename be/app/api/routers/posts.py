@@ -165,12 +165,6 @@ def update_post(post_id: int, payload: PostUpdate, db: Session = Depends(get_db)
     if not post:
         raise HTTPException(status_code=404, detail="post not found")
 
-    if payload.password is None or not payload.password.strip():
-        raise HTTPException(status_code=400, detail="password is required")
-
-    if payload.password != post.password:
-        raise HTTPException(status_code=403, detail="password mismatch")
-
     if payload.title is not None:
         title = payload.title.strip()
         if not title:

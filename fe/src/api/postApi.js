@@ -117,7 +117,6 @@ export const updatePost = async (postId, payload) => {
     title: payload.title,
     content: payload.content,
     category: payload.category,
-    password: payload.password || null,
     location_name: payload.locationName || null
   }
 
