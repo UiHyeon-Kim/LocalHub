@@ -83,6 +83,7 @@ def resolve_place_id(
 @router.get("", response_model=PostListResponse)
 def list_posts(
     keyword: Optional[str] = None,
+    category: Optional[str] = None,
     page: int = 1,
     size: int = 10,
     db: Session = Depends(get_db),
@@ -100,6 +101,10 @@ def list_posts(
                 Post.content.ilike(f"%{keyword_value}%"),
             )
         )
+
+    if category and category.strip():
+        category_value = category.strip()
+        query = query.filter(Post.category == category_value)
 
     total = query.count()
     posts = (
