@@ -43,6 +43,8 @@ def build_description(place: Place) -> str:
 def map_place(place: Place) -> dict:
     return {
         "id": place.id,
+        "content_id": place.content_id,
+        "content_type_id": place.content_type_id,
         "name": place.title,
         "category": place.content_type,
         "address": place.addr1,

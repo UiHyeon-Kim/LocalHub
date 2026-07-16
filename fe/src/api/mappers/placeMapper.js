@@ -42,6 +42,8 @@ export const mapPlace = (rawPlace) => {
 
   return {
     id: place.id,
+    contentId: place.contentId || null,
+    contentTypeId: place.contentTypeId || null,
     name: place.name || place.title || '',
     category: place.category || place.contentType || '',
     shortDescription:
@@ -49,6 +51,8 @@ export const mapPlace = (rawPlace) => {
       place.address ||
       place.addr1 ||
       '',
+    likeCount: place.likeCount ?? place.like_count ?? 0,
+    viewCount: place.viewCount ?? place.view_count ?? 0,
     description: place.description || '',
     address: place.address || place.addr1 || '',
     phone: place.phone || place.tel || null,

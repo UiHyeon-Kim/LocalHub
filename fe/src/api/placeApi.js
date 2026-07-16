@@ -96,3 +96,30 @@ export const getNearbyPlaces = async (placeId, limit = 3, reference = null) => {
 
   return places
 }
+
+/**
+ * 관광 상세 정보 조회
+ * GET /api/tourism/common
+ */
+export const getTourismCommon = async (
+  contentId,
+  contentTypeId = null,
+) => {
+  if (!contentId) {
+    throw new Error('관광 콘텐츠 ID가 필요합니다.')
+  }
+
+  const params = {
+    content_id: contentId,
+  }
+
+  if (contentTypeId) {
+    params.content_type_id = contentTypeId
+  }
+
+  const response = await http.get('/api/tourism/common', {
+    params,
+  })
+
+  return response.data
+}
