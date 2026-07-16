@@ -23,7 +23,7 @@
           :href="destinationUrl"
           target="_blank"
           rel="noopener noreferrer"
-          class="flex-1 rounded-lg bg-[var(--color-primary)] px-4 py-3 text-center text-white font-semibold hover:bg-[var(--color-primary-hover)]"
+          class="flex-1 rounded-lg bg-[var(--color-primary)] px-4 py-3 text-center font-semibold !text-white transition hover:bg-[var(--color-primary-hover)] hover:!text-white"
         >
           길찾기
         </a>
