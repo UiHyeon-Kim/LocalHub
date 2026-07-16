@@ -147,11 +147,6 @@ const likeLoading = ref(false)
 const liked = ref(false)
 const error = ref('')
 
-const DEFAULT_NEARBY_REFERENCE = {
-  lat: 36.1173,
-  lon: 128.3440,
-}
-
 /**
  * 장소별 좋아요 상태를 브라우저에 저장할 때 사용하는 키
  */
@@ -249,37 +244,6 @@ const toggleLike = async () => {
 }
 
 /**
- * 주변 장소 조회 기준 위치
- */
-const getNearbyReference = async () => {
-  if (!('geolocation' in navigator)) {
-    return DEFAULT_NEARBY_REFERENCE
-  }
-
-  try {
-    const position = await new Promise(
-      (resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          reject,
-          {
-            enableHighAccuracy: false,
-            timeout: 4000,
-          },
-        )
-      },
-    )
-
-    return {
-      lat: position.coords.latitude,
-      lon: position.coords.longitude,
-    }
-  } catch {
-    return DEFAULT_NEARBY_REFERENCE
-  }
-}
-
-/**
  * 장소 상세 정보 조회
  */
 const loadPlace = async () => {
@@ -293,6 +257,7 @@ const loadPlace = async () => {
   liked.value = false
 
   try {
+    // 현재 상세 장소 조회
     place.value = await getPlace(placeId)
 
     liked.value = readLikedState(
@@ -300,8 +265,24 @@ const loadPlace = async () => {
     )
 
     try {
-      const reference =
-        await getNearbyReference()
+      // 현재 보고 있는 장소의 좌표 사용
+      const latitude = Number(
+        place.value.latitude,
+      )
+      const longitude = Number(
+        place.value.longitude,
+      )
+
+      const hasValidCoordinates =
+        Number.isFinite(latitude) &&
+        Number.isFinite(longitude)
+
+      const reference = hasValidCoordinates
+        ? {
+            lat: latitude,
+            lon: longitude,
+          }
+        : null
 
       nearbyPlaces.value =
         await getNearbyPlaces(
