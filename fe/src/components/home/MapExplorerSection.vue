@@ -1,4 +1,3 @@
-```vue
 <template>
   <section class="bg-[var(--color-background)] py-16">
     <div class="page-container">
@@ -43,23 +42,26 @@
 
         <!-- 오른쪽: 최대 4개 표시 -->
         <div class="flex h-full flex-col gap-3">
-          <div
+          <button
             v-for="place in visiblePlaces"
             :key="place.id"
+            type="button"
             class="
+              w-full
               cursor-pointer
               rounded-[20px]
               border
               border-[var(--color-border)]
               bg-white
               p-5
+              text-left
               transition
               hover:border-[var(--color-primary)]
               hover:shadow-sm
             "
             @mouseenter="hoveredPlaceId = place.id"
             @mouseleave="hoveredPlaceId = null"
-            @click="selectedPlaceId = place.id"
+            @click="goToPlaceDetail(place.id)"
           >
             <div class="flex gap-4">
               <div
@@ -134,7 +136,7 @@
                 </p>
               </div>
             </div>
-          </div>
+          </button>
         </div>
       </div>
 
@@ -158,6 +160,8 @@
 
 <script setup>
 import { computed, ref, watchEffect } from 'vue'
+import { useRouter } from 'vue-router'
+
 import PlaceMap from '@/components/place/PlaceMap.vue'
 
 const props = defineProps({
@@ -166,6 +170,8 @@ const props = defineProps({
     required: true,
   },
 })
+
+const router = useRouter()
 
 const selectedPlaceId = ref(null)
 const hoveredPlaceId = ref(null)
@@ -189,6 +195,15 @@ const effectiveSelectedId = computed(() => {
   return hoveredPlaceId.value ?? selectedPlaceId.value
 })
 
+const goToPlaceDetail = (placeId) => {
+  router.push({
+    name: 'PlaceDetail',
+    params: {
+      id: placeId,
+    },
+  })
+}
+
 const handleMapSelectPlace = (placeId) => {
   selectedPlaceId.value = placeId
 }
@@ -202,4 +217,3 @@ watchEffect(() => {
   }
 })
 </script>
-```

@@ -1,6 +1,7 @@
 import json
 import re
 from html import unescape
+from time import time
 from typing import Any
 from urllib.error import HTTPError, URLError
 from urllib.parse import urlencode
@@ -13,6 +14,12 @@ from app.core.config import TOUR_API_SERVICE_KEY
 
 TOUR_API_BASE_URL = "https://apis.data.go.kr/B551011/KorService2"
 REQUEST_TIMEOUT_SECONDS = 10
+
+# 30분 캐시
+CACHE_TTL_SECONDS = 60 * 30
+
+# 서버 메모리에 저장되는 간단한 캐시
+TOURISM_CACHE: dict[str, dict[str, Any]] = {}
 
 router = APIRouter(prefix="/api/tourism", tags=["tourism"])
 
@@ -82,18 +89,84 @@ def clean_html(value: str | None) -> str | None:
     if not value:
         return None
 
-    cleaned = re.sub(r"<br\s*/?>", "\n", value, flags=re.IGNORECASE)
+    cleaned = re.sub(
+        r"<br\s*/?>",
+        "\n",
+        value,
+        flags=re.IGNORECASE,
+    )
     cleaned = re.sub(r"<[^>]+>", "", cleaned)
     cleaned = unescape(cleaned).replace("\xa0", " ").strip()
 
     return cleaned or None
 
 
+def make_cache_key(
+    content_id: int,
+    content_type_id: int | None,
+) -> str:
+    return f"{content_id}:{content_type_id or 'unknown'}"
+
+
+def get_cached_data(
+    cache_key: str,
+) -> dict[str, Any] | None:
+    cached = TOURISM_CACHE.get(cache_key)
+
+    if cached is None:
+        return None
+
+    saved_at = cached.get("saved_at")
+    data = cached.get("data")
+
+    if not isinstance(saved_at, (int, float)):
+        TOURISM_CACHE.pop(cache_key, None)
+        return None
+
+    if not isinstance(data, dict):
+        TOURISM_CACHE.pop(cache_key, None)
+        return None
+
+    elapsed_seconds = time() - saved_at
+
+    if elapsed_seconds >= CACHE_TTL_SECONDS:
+        TOURISM_CACHE.pop(cache_key, None)
+        return None
+
+    return data
+
+
+def set_cached_data(
+    cache_key: str,
+    data: dict[str, Any],
+) -> None:
+    TOURISM_CACHE[cache_key] = {
+        "saved_at": time(),
+        "data": data,
+    }
+
+
 @router.get("/common")
 def get_common_info(
     content_id: int = Query(..., gt=0),
-    content_type_id: int | None = Query(default=None, gt=0),
+    content_type_id: int | None = Query(
+        default=None,
+        gt=0,
+    ),
 ) -> dict[str, Any]:
+    initial_cache_key = make_cache_key(
+        content_id,
+        content_type_id,
+    )
+
+    cached_data = get_cached_data(initial_cache_key)
+
+    if cached_data is not None:
+        print(f"[Tour API cache hit] {initial_cache_key}")
+        return cached_data
+
+    print(f"[Tour API cache miss] {initial_cache_key}")
+
     common_payload = request_tour_api(
         "detailCommon2",
         contentId=content_id,
@@ -106,7 +179,12 @@ def get_common_info(
         raw_content_type_id = common.get("contenttypeid")
 
         if raw_content_type_id:
-            resolved_content_type_id = int(raw_content_type_id)
+            try:
+                resolved_content_type_id = int(
+                    raw_content_type_id,
+                )
+            except (TypeError, ValueError):
+                resolved_content_type_id = None
 
     intro: dict[str, Any] = {}
 
@@ -122,9 +200,17 @@ def get_common_info(
         first_non_empty(common, "addr1"),
         first_non_empty(common, "addr2"),
     ]
-    address = " ".join(part for part in address_parts if part) or None
 
-    return {
+    address = (
+        " ".join(
+            part
+            for part in address_parts
+            if part
+        )
+        or None
+    )
+
+    result = {
         "content_id": content_id,
         "content_type_id": resolved_content_type_id,
         "address": clean_html(address),
@@ -163,14 +249,52 @@ def get_common_info(
         ),
     }
 
+    # 요청에 content_type_id가 있었던 경우
+    set_cached_data(
+        initial_cache_key,
+        result,
+    )
+
+    # content_type_id를 Tour API에서 알아낸 경우에도
+    # 확정된 키로 한 번 더 저장
+    resolved_cache_key = make_cache_key(
+        content_id,
+        resolved_content_type_id,
+    )
+
+    if resolved_cache_key != initial_cache_key:
+        set_cached_data(
+            resolved_cache_key,
+            result,
+        )
+
+    return result
+
 
 @router.get("/intro")
 def get_intro_info(
     content_id: int = Query(..., gt=0),
     content_type_id: int = Query(..., gt=0),
 ) -> dict[str, Any]:
-    return request_tour_api(
+    cache_key = f"intro:{content_id}:{content_type_id}"
+
+    cached_data = get_cached_data(cache_key)
+
+    if cached_data is not None:
+        print(f"[Tour API cache hit] {cache_key}")
+        return cached_data
+
+    print(f"[Tour API cache miss] {cache_key}")
+
+    result = request_tour_api(
         "detailIntro2",
         contentId=content_id,
         contentTypeId=content_type_id,
     )
+
+    set_cached_data(
+        cache_key,
+        result,
+    )
+
+    return result

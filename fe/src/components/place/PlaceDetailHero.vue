@@ -6,12 +6,15 @@
         :alt="place.name"
         class="h-full w-full object-cover"
       />
+
       <div class="absolute inset-0 bg-black/45" />
 
       <div class="absolute inset-0">
         <div class="page-container flex h-full items-end py-10">
-          <div class="flex w-full items-end justify-between gap-6 pb-6 md:pb-8">
-            <!-- 왼쪽 텍스트 -->
+          <div
+            class="flex w-full items-end justify-between gap-6 pb-6 md:pb-8"
+          >
+            <!-- 왼쪽 제목 -->
             <div class="min-w-0">
               <span
                 v-if="place.category"
@@ -27,26 +30,41 @@
               </h1>
             </div>
 
-            <!-- 우측 메타 -->
+            <!-- 좋아요 / 조회수 -->
             <div
-              class="flex shrink-0 items-center gap-4 rounded-full bg-white/12 px-5 py-3 text-white backdrop-blur-sm"
+              class="flex shrink-0 items-center gap-4 rounded-full bg-black/45 px-5 py-3 text-white backdrop-blur-sm"
             >
               <button
                 type="button"
-                class="inline-flex items-center gap-2 transition hover:opacity-80"
+                class="inline-flex items-center gap-2 rounded-full transition hover:opacity-80 disabled:cursor-not-allowed disabled:opacity-60"
+                :aria-pressed="liked"
+                :disabled="likeLoading"
+                @click="emit('toggle-like')"
               >
-                <span class="text-lg">❤️</span>
+                <span
+                  class="text-lg"
+                  aria-hidden="true"
+                >
+                  {{ liked ? '❤️' : '🤍' }}
+                </span>
+
                 <span class="text-sm font-semibold">
-                  {{ likeCount }}
+                  {{ place.likeCount ?? 0 }}
                 </span>
               </button>
 
               <div class="h-5 w-px bg-white/30" />
 
               <div class="inline-flex items-center gap-2">
-                <span class="text-lg">👁️</span>
+                <span
+                  class="text-lg"
+                  aria-hidden="true"
+                >
+                  👁️
+                </span>
+
                 <span class="text-sm font-semibold">
-                  {{ viewCount }}
+                  {{ place.viewCount ?? 0 }}
                 </span>
               </div>
             </div>
@@ -65,7 +83,19 @@ const props = defineProps({
     type: Object,
     required: true,
   },
+  liked: {
+    type: Boolean,
+    default: false,
+  },
+  likeLoading: {
+    type: Boolean,
+    default: false,
+  },
 })
+
+const emit = defineEmits([
+  'toggle-like',
+])
 
 const heroImage = computed(() => {
   return (
@@ -73,13 +103,5 @@ const heroImage = computed(() => {
     props.place.thumbnailUrl ||
     'https://images.unsplash.com/photo-1506744038136-46273834b3fb?auto=format&fit=crop&w=1400&q=80'
   )
-})
-
-const likeCount = computed(() => {
-  return props.place.likeCount ?? props.place.likes ?? 0
-})
-
-const viewCount = computed(() => {
-  return props.place.viewCount ?? props.place.views ?? 0
 })
 </script>
