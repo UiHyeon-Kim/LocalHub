@@ -149,7 +149,11 @@
 <script setup>
 import { ref, computed, onMounted } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
-import { getPostById, createMockPost, updateMockPost } from '@/data/mockPosts'
+import {
+  getPost,
+  createPost,
+  updatePost,
+} from '@/api/postApi'
 
 const route = useRoute()
 const router = useRouter()
@@ -169,7 +173,7 @@ const form = ref({
 const errors = ref({})
 const isSubmitting = ref(false)
 
-onMounted(() => {
+onMounted(async () => {
   if (isEditMode.value) {
     const verifyKey = sessionStorage.getItem(`localhub-post-edit-${postId}`)
     if (!verifyKey) {
@@ -177,7 +181,7 @@ onMounted(() => {
       return
     }
 
-    const post = getPostById(postId)
+    const post = await getPost(postId)
     if (post) {
       form.value = {
         category: post.category,
@@ -242,7 +246,7 @@ const handleSubmit = async () => {
 
   try {
     if (isEditMode.value) {
-      await updateMockPost(postId, {
+      await updatePost(postId, {
         category: form.value.category,
         title: form.value.title,
         content: form.value.content,
@@ -251,7 +255,7 @@ const handleSubmit = async () => {
       sessionStorage.removeItem(`localhub-post-edit-${postId}`)
       await router.push(`/posts/${postId}`)
     } else {
-      const newPost = await createMockPost({
+      const newPost = await createPost({
         title: form.value.title,
         content: form.value.content,
         category: form.value.category,

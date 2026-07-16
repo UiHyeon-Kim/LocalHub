@@ -173,25 +173,25 @@
 
 <script setup>
 import {
-  computed,
   onBeforeUnmount,
   onMounted,
   ref,
+  computed,
 } from 'vue'
 import { useRoute, useRouter } from 'vue-router'
 
 import PasswordModal from '@/components/post/PasswordModal.vue'
 import {
-  deleteMockPost,
-  getPostById,
+  getPost,
+  deletePost,
   verifyPostPassword,
-} from '@/data/mockPosts'
+} from '@/api/postApi'
 
 const route = useRoute()
 const router = useRouter()
 
 const postId = computed(() => String(route.params.id))
-const post = computed(() => getPostById(postId.value))
+const post = ref(null)
 
 const menuRef = ref(null)
 const isMenuOpen = ref(false)
@@ -205,24 +205,17 @@ const editError = ref('')
 const deleteLoading = ref(false)
 const deleteError = ref('')
 
+const loadPost = async () => {
+  try {
+    post.value = await getPost(postId.value)
+  } catch (error) {
+    console.error(error)
+  }
+}
+
 const formatDateTime = (dateString) => {
-  if (!dateString) {
-    return '-'
-  }
-
-  const date = new Date(dateString)
-
-  if (Number.isNaN(date.getTime())) {
-    return dateString
-  }
-
-  return date.toLocaleString('ko-KR', {
-    year: 'numeric',
-    month: '2-digit',
-    day: '2-digit',
-    hour: '2-digit',
-    minute: '2-digit',
-  })
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleString('ko-KR')
 }
 
 const toggleMenu = () => {
@@ -234,10 +227,7 @@ const closeMenu = () => {
 }
 
 const handleOutsideClick = (event) => {
-  if (
-    menuRef.value &&
-    !menuRef.value.contains(event.target)
-  ) {
+  if (menuRef.value && !menuRef.value.contains(event.target)) {
     closeMenu()
   }
 }
@@ -249,11 +239,6 @@ const openEditModal = () => {
 }
 
 const closeEditModal = () => {
-  if (editLoading.value) {
-    return
-  }
-
-  editError.value = ''
   showEditPasswordModal.value = false
 }
 
@@ -264,62 +249,35 @@ const openDeleteModal = () => {
 }
 
 const closeDeleteModal = () => {
-  if (deleteLoading.value) {
-    return
-  }
-
-  deleteError.value = ''
   showDeletePasswordModal.value = false
 }
 
 const handleEditPassword = async (password) => {
-  editLoading.value = true
-  editError.value = ''
-
   try {
-    verifyPostPassword(postId.value, password)
+    await verifyPostPassword(postId.value, password)
 
     sessionStorage.setItem(
       `localhub-post-edit-${postId.value}`,
       'verified',
     )
 
-    showEditPasswordModal.value = false
-
-    await router.push(
-      `/posts/${postId.value}/edit`,
-    )
+    router.push(`/posts/${postId.value}/edit`)
   } catch (error) {
-    editError.value =
-      error instanceof Error
-        ? error.message
-        : '비밀번호 확인에 실패했습니다.'
-  } finally {
-    editLoading.value = false
+    editError.value = error.message
   }
 }
 
 const handleDeletePassword = async (password) => {
-  deleteLoading.value = true
-  deleteError.value = ''
-
   try {
-    deleteMockPost(postId.value, password)
-
-    showDeletePasswordModal.value = false
-
-    await router.push('/posts')
+    await deletePost(postId.value, password)
+    router.push('/posts')
   } catch (error) {
-    deleteError.value =
-      error instanceof Error
-        ? error.message
-        : '게시글 삭제에 실패했습니다.'
-  } finally {
-    deleteLoading.value = false
+    deleteError.value = error.message
   }
 }
 
 onMounted(() => {
+  loadPost()
   document.addEventListener('click', handleOutsideClick)
 })
 
