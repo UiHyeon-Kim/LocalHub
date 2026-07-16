@@ -1,308 +1,287 @@
 <template>
-  <div class="min-h-screen bg-[var(--color-background)]">
-    <!-- Loading -->
-    <div
-      v-if="loading"
-      class="page-container flex min-h-[calc(100vh-var(--header-height))] items-center justify-center px-6"
-    >
-      <div class="text-center">
-        <div
-          class="mx-auto h-10 w-10 animate-spin rounded-full border-4 border-[var(--color-border)] border-t-[var(--color-primary)]"
-        />
+  <div
+    v-if="post"
+    class="min-h-screen bg-[var(--color-background)]"
+  >
+    <main class="py-10 md:py-14">
+      <div class="page-container">
+        <div class="mx-auto max-w-4xl">
+          <!-- 목록으로 돌아가기 -->
+          <RouterLink
+            to="/posts"
+            class="mb-7 inline-flex items-center gap-2 text-sm font-semibold !text-[var(--color-text)] transition hover:gap-3 hover:!text-[var(--color-primary)]"
+          >
+            <span aria-hidden="true">←</span>
+            목록으로 돌아가기
+          </RouterLink>
 
-        <p class="mt-4 text-sm text-[var(--color-text-muted)]">
-          장소 정보를 불러오는 중입니다.
-        </p>
-      </div>
-    </div>
-
-    <!-- Place Detail -->
-    <template v-else-if="place">
-      <PlaceDetailHero
-        :place="place"
-        :liked="liked"
-        :like-loading="likeLoading"
-        @toggle-like="toggleLike"
-      />
-
-      <main class="py-10 lg:py-14">
-        <div class="page-container">
-          <div class="grid grid-cols-12 gap-8">
-            <!-- 왼쪽 콘텐츠 -->
-            <div class="col-span-12 space-y-8 lg:col-span-8">
-              <PlaceInfoGrid :place="place" />
-
-              <section
-                class="overflow-hidden rounded-2xl border border-[var(--color-border)] bg-white p-6 shadow-sm"
-              >
-                <PlaceDescription :place="place" />
-              </section>
-
-              <section v-if="nearbyPlaces.length > 0">
-                <h3
-                  class="mb-4 text-xl font-bold text-[var(--color-text)]"
+          <!-- 게시글 -->
+          <article
+            class="rounded-[20px] border border-[var(--color-border)] bg-white px-8 py-8 shadow-sm md:px-10 md:py-10"
+          >
+            <!-- 상단 정보 -->
+            <div class="relative">
+              <div class="pr-12">
+                <!-- 카테고리 -->
+                <span
+                  class="inline-flex items-center rounded-[8px] bg-blue-50 px-3 py-1.5 text-sm font-semibold text-blue-700"
                 >
-                  함께 둘러보기 좋은 장소
-                </h3>
+                  {{ post.category }}
+                </span>
 
-                <NearbyPlacesSection
-                  :nearby-places="nearbyPlaces"
-                />
-              </section>
+                <!-- 제목 -->
+                <h1
+                  class="mt-5 break-keep text-3xl font-bold leading-tight text-[var(--color-text)] md:text-4xl"
+                >
+                  {{ post.title }}
+                </h1>
+              </div>
+
+              <!-- 더보기 메뉴 -->
+              <div
+                ref="menuRef"
+                class="absolute right-0 top-0"
+              >
+                <button
+                  type="button"
+                  aria-label="게시글 관리 메뉴"
+                  :aria-expanded="isMenuOpen"
+                  class="flex h-10 w-10 items-center justify-center rounded-full text-2xl leading-none text-[var(--color-text-muted)] transition hover:bg-[var(--color-surface-muted)] hover:text-[var(--color-text)]"
+                  @click.stop="toggleMenu"
+                >
+                  ⋮
+                </button>
+
+                <div
+                  v-if="isMenuOpen"
+                  class="absolute right-0 top-12 z-20 w-28 overflow-hidden rounded-[12px] border border-[var(--color-border)] bg-white py-1 shadow-lg"
+                >
+                  <button
+                    type="button"
+                    class="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-[var(--color-text)] transition hover:bg-[var(--color-surface-muted)]"
+                    @click="openEditModal"
+                  >
+                    수정
+                  </button>
+
+                  <button
+                    type="button"
+                    class="flex w-full items-center px-4 py-2.5 text-left text-sm font-medium text-red-500 transition hover:bg-red-50"
+                    @click="openDeleteModal"
+                  >
+                    삭제
+                  </button>
+                </div>
+              </div>
             </div>
 
-            <!-- 오른쪽 위치 정보 -->
-            <aside class="col-span-12 lg:col-span-4">
-              <div
-                class="space-y-4 lg:sticky lg:top-[calc(var(--header-height)+24px)]"
+            <!-- 메타 정보 -->
+            <div
+              class="mt-6 flex flex-wrap items-center gap-x-6 gap-y-2 text-sm text-[var(--color-text-muted)]"
+            >
+              <span>
+                작성일: {{ formatDateTime(post.createdAt) }}
+              </span>
+
+              <span v-if="post.updatedAt">
+                수정됨: {{ formatDateTime(post.updatedAt) }}
+              </span>
+
+              <span>
+                조회수: {{ post.viewCount ?? 0 }}
+              </span>
+
+              <span
+                v-if="post.locationName"
+                class="inline-flex items-center gap-1"
               >
-                <PlaceLocationCard :place="place" />
-              </div>
-            </aside>
-          </div>
-        </div>
-      </main>
-    </template>
+                <span aria-hidden="true">📍</span>
+                {{ post.locationName }}
+              </span>
+            </div>
 
-    <!-- Error / Not Found -->
-    <div
-      v-else
-      class="flex min-h-[calc(100vh-var(--header-height))] items-center justify-center px-6"
-    >
-      <div
-        class="w-full max-w-lg rounded-2xl border border-[var(--color-border)] bg-white px-8 py-14 text-center shadow-sm"
-      >
-        <div
-          class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-2xl"
-        >
-          📍
-        </div>
+            <!-- 구분선 -->
+            <div class="my-8 border-t border-[var(--color-border)]"></div>
 
-        <h1
-          class="mt-6 text-2xl font-semibold text-[var(--color-text)]"
-        >
-          {{
-            error
-              ? '장소 정보를 불러오지 못했습니다'
-              : '장소를 찾을 수 없습니다'
-          }}
-        </h1>
-
-        <p
-          class="mt-3 text-sm text-[var(--color-text-muted)]"
-        >
-          {{
-            error ||
-            '요청하신 장소 정보가 없거나 삭제된 장소입니다.'
-          }}
-        </p>
-
-        <div class="mt-8 flex justify-center gap-3">
-          <button
-            v-if="error"
-            type="button"
-            class="rounded-lg border border-[var(--color-primary)] px-6 py-3 font-semibold text-[var(--color-primary)] transition hover:bg-[var(--color-surface-muted)]"
-            @click="loadPlace"
-          >
-            다시 시도
-          </button>
-
-          <RouterLink
-            to="/places"
-            class="inline-block rounded-lg bg-[var(--color-primary)] px-6 py-3 font-semibold !text-white transition hover:bg-[var(--color-primary-hover)] hover:!text-white"
-          >
-            장소 목록으로 돌아가기
-          </RouterLink>
+            <!-- 본문 -->
+            <p
+              class="min-h-[120px] whitespace-pre-wrap break-words text-base leading-8 text-[var(--color-text)]"
+            >
+              {{ post.content }}
+            </p>
+          </article>
         </div>
       </div>
+    </main>
+
+    <!-- 수정 비밀번호 모달 -->
+    <PasswordModal
+      :open="showEditPasswordModal"
+      title="게시글 수정"
+      description="이 게시글을 수정하려면 작성 시 등록한 비밀번호를 입력하세요."
+      confirm-text="인증"
+      :loading="editLoading"
+      :error-message="editError"
+      @close="closeEditModal"
+      @confirm="handleEditPassword"
+    />
+
+    <!-- 삭제 비밀번호 모달 -->
+    <PasswordModal
+      :open="showDeletePasswordModal"
+      title="게시글 삭제"
+      description="삭제한 게시글은 복구할 수 없습니다. 작성 시 등록한 비밀번호를 입력하세요."
+      confirm-text="삭제"
+      :loading="deleteLoading"
+      :error-message="deleteError"
+      @close="closeDeleteModal"
+      @confirm="handleDeletePassword"
+    />
+  </div>
+
+  <!-- Not Found -->
+  <div
+    v-else
+    class="flex min-h-screen items-center justify-center bg-[var(--color-background)] px-6"
+  >
+    <div
+      class="w-full max-w-lg rounded-[24px] border border-[var(--color-border)] bg-white px-8 py-14 text-center shadow-sm"
+    >
+      <div
+        class="mx-auto flex h-14 w-14 items-center justify-center rounded-full bg-[var(--color-surface-muted)] text-2xl"
+      >
+        📝
+      </div>
+
+      <h1 class="mt-6 text-3xl font-bold text-[var(--color-text)]">
+        게시글을 찾을 수 없습니다
+      </h1>
+
+      <p class="mt-3 text-sm leading-7 text-[var(--color-text-muted)]">
+        요청하신 게시글이 없거나 삭제되었습니다.
+      </p>
+
+      <RouterLink
+        to="/posts"
+        class="mt-8 inline-flex h-12 items-center justify-center rounded-[14px] bg-[var(--color-primary)] px-6 text-sm font-semibold !text-white transition hover:bg-[var(--color-primary-hover)]"
+      >
+        목록으로 돌아가기
+      </RouterLink>
     </div>
   </div>
 </template>
 
 <script setup>
-import { ref, watch } from 'vue'
-import { useRoute } from 'vue-router'
-
 import {
-  getNearbyPlaces,
-  getPlace,
-  likePlace,
-  unlikePlace,
-} from '@/api/placeApi'
+  onBeforeUnmount,
+  onMounted,
+  ref,
+  computed,
+} from 'vue'
+import { useRoute, useRouter } from 'vue-router'
 
-import NearbyPlacesSection from '@/components/place/NearbyPlacesSection.vue'
-import PlaceDescription from '@/components/place/PlaceDescription.vue'
-import PlaceDetailHero from '@/components/place/PlaceDetailHero.vue'
-import PlaceInfoGrid from '@/components/place/PlaceInfoGrid.vue'
-import PlaceLocationCard from '@/components/place/PlaceLocationCard.vue'
+import PasswordModal from '@/components/post/PasswordModal.vue'
+import {
+  getPost,
+  deletePost,
+  verifyPostPassword,
+} from '@/api/postApi'
 
 const route = useRoute()
+const router = useRouter()
 
-const place = ref(null)
-const nearbyPlaces = ref([])
+const postId = computed(() => String(route.params.id))
+const post = ref(null)
 
-const loading = ref(false)
-const likeLoading = ref(false)
+const menuRef = ref(null)
+const isMenuOpen = ref(false)
 
-const liked = ref(false)
-const error = ref('')
+const showEditPasswordModal = ref(false)
+const showDeletePasswordModal = ref(false)
 
-const DEFAULT_NEARBY_REFERENCE = {
-  lat: 36.1173,
-  lon: 128.3440,
-}
+const editLoading = ref(false)
+const editError = ref('')
 
-const getLikeStorageKey = (placeId) => {
-  return `localhub:place-like:${placeId}`
-}
+const deleteLoading = ref(false)
+const deleteError = ref('')
 
-const readLikedState = (placeId) => {
-  return (
-    localStorage.getItem(
-      getLikeStorageKey(placeId),
-    ) === 'true'
-  )
-}
-
-const saveLikedState = (
-  placeId,
-  isLiked,
-) => {
-  const key = getLikeStorageKey(placeId)
-
-  if (isLiked) {
-    localStorage.setItem(
-      key,
-      'true',
-    )
-  } else {
-    localStorage.removeItem(key)
-  }
-}
-
-const getNearbyReference = async () => {
-  if (!('geolocation' in navigator)) {
-    return DEFAULT_NEARBY_REFERENCE
-  }
-
+const loadPost = async () => {
   try {
-    const position = await new Promise(
-      (resolve, reject) => {
-        navigator.geolocation.getCurrentPosition(
-          resolve,
-          reject,
-          {
-            enableHighAccuracy: false,
-            timeout: 4000,
-          },
-        )
-      },
-    )
-
-    return {
-      lat: position.coords.latitude,
-      lon: position.coords.longitude,
-    }
-  } catch {
-    return DEFAULT_NEARBY_REFERENCE
+    post.value = await getPost(postId.value)
+  } catch (error) {
+    console.error(error)
   }
 }
 
-const toggleLike = async () => {
-  if (
-    !place.value ||
-    likeLoading.value
-  ) {
-    return
+const formatDateTime = (dateString) => {
+  if (!dateString) return '-'
+  return new Date(dateString).toLocaleString('ko-KR')
+}
+
+const toggleMenu = () => {
+  isMenuOpen.value = !isMenuOpen.value
+}
+
+const closeMenu = () => {
+  isMenuOpen.value = false
+}
+
+const handleOutsideClick = (event) => {
+  if (menuRef.value && !menuRef.value.contains(event.target)) {
+    closeMenu()
   }
+}
 
-  const placeId = place.value.id
-  const previousLiked = liked.value
-  const previousCount = place.value.likeCount ?? 0
+const openEditModal = () => {
+  closeMenu()
+  editError.value = ''
+  showEditPasswordModal.value = true
+}
 
-  likeLoading.value = true
+const closeEditModal = () => {
+  showEditPasswordModal.value = false
+}
 
-  // 화면을 먼저 반영하는 낙관적 업데이트
-  liked.value = !previousLiked
+const openDeleteModal = () => {
+  closeMenu()
+  deleteError.value = ''
+  showDeletePasswordModal.value = true
+}
 
-  place.value.likeCount = Math.max(
-    0,
-    previousCount +
-      (liked.value ? 1 : -1),
-  )
+const closeDeleteModal = () => {
+  showDeletePasswordModal.value = false
+}
 
+const handleEditPassword = async (password) => {
   try {
-    const result = liked.value
-      ? await likePlace(placeId)
-      : await unlikePlace(placeId)
+    await verifyPostPassword(postId.value, password)
 
-    liked.value = result.liked
-    place.value.likeCount = result.likeCount
-
-    saveLikedState(
-      placeId,
-      result.liked,
-    )
-  } catch (likeError) {
-    console.error(
-      '좋아요 처리 실패:',
-      likeError,
+    sessionStorage.setItem(
+      `localhub-post-edit-${postId.value}`,
+      'verified',
     )
 
-    // 실패하면 이전 상태로 복구
-    liked.value = previousLiked
-    place.value.likeCount = previousCount
-  } finally {
-    likeLoading.value = false
+    router.push(`/posts/${postId.value}/edit`)
+  } catch (error) {
+    editError.value = error.message
   }
 }
 
-const loadPlace = async () => {
-  const placeId = route.params.id
-
-  loading.value = true
-  error.value = ''
-
-  place.value = null
-  nearbyPlaces.value = []
-
+const handleDeletePassword = async (password) => {
   try {
-    place.value = await getPlace(placeId)
-
-    liked.value = readLikedState(
-      place.value.id,
-    )
-
-    try {
-      const reference =
-        await getNearbyReference()
-
-      nearbyPlaces.value =
-        await getNearbyPlaces(
-          placeId,
-          3,
-          reference,
-        )
-    } catch {
-      nearbyPlaces.value = []
-    }
-  } catch (loadError) {
-    error.value =
-      loadError instanceof Error
-        ? loadError.message
-        : '장소 정보를 불러오지 못했습니다.'
-  } finally {
-    loading.value = false
+    await deletePost(postId.value, password)
+    router.push('/posts')
+  } catch (error) {
+    deleteError.value = error.message
   }
 }
 
-watch(
-  () => route.params.id,
-  () => {
-    loadPlace()
-  },
-  {
-    immediate: true,
-  },
-)
+onMounted(() => {
+  loadPost()
+  document.addEventListener('click', handleOutsideClick)
+})
+
+onBeforeUnmount(() => {
+  document.removeEventListener('click', handleOutsideClick)
+})
 </script>
