@@ -1,175 +1,22 @@
-# LocalHub Frontend README
+<div align="center">
 
-> Vue 3 기반 LocalHub 프론트엔드
+# LocalHub
 
-## 1. 기술 스택
+**지역 장소 탐색 · 커뮤니티 · 챗봇을 하나로 연결한 Web Service**
 
-| 구분 | 기술 |
-|---|---|
-| Framework | Vue 3 |
-| Build Tool | Vite |
-| Language | JavaScript |
-| Router | Vue Router |
-| Styling | Tailwind CSS v4 + CSS Variables |
-| Map | Leaflet + OpenStreetMap |
-| HTTP Client | Axios |
-| Deploy | Netlify 예정 |
+Vue 3 기반으로 장소 탐색, 지도, 익명 커뮤니티와<br/>
+추천 챗봇을 구현한 SSAFY 팀 프로젝트입니다.
 
----
+![Vue](https://img.shields.io/badge/Vue%203-4FC08D?logo=vuedotjs&logoColor=white)
+![Vite](https://img.shields.io/badge/Vite-646CFF?logo=vite&logoColor=white)
+![Tailwind](https://img.shields.io/badge/Tailwind%20CSS-06B6D4?logo=tailwindcss&logoColor=white)
+![Leaflet](https://img.shields.io/badge/Leaflet-199900?logo=leaflet&logoColor=white)
 
-## 2. 주요 구현 범위
-
-### 홈
-
-- Hero Section
-- 카테고리 탐색
-- 실제 장소 API 기반 추천 장소
-- Leaflet 지도 기반 장소 탐색
-- 커뮤니티 미리보기
-- 지역 소개 배너
-
-### 장소
-
-- 장소 목록 `/places`
-- 검색어와 카테고리 필터
-- URL Query 기반 상태 유지
-- 페이지네이션
-- 장소 상세 `/places/:id`
-- 위치 지도
-- 주변 장소 추천
-- 이미지 fallback
-- 좋아요 상태 UI
-
-### 커뮤니티
-
-- 게시글 목록 `/posts`
-- 게시글 상세 `/posts/:id`
-- 게시글 작성 `/posts/new`
-- 게시글 수정 `/posts/:id/edit`
-- 비밀번호 확인 모달
-- 검색, 카테고리 필터, 페이지네이션
-
-### 챗봇
-
-- 우측 하단 플로팅 버튼
-- 열린 대화창 UI
-- 추천 질문
-- 대화 히스토리
-- API 응답 reference 링크
-- 모바일 대응
+</div>
 
 ---
 
-## 3. 폴더 구조
-
-```text
-src/
-├─ api/
-│  ├─ http.js
-│  ├─ placeApi.js
-│  ├─ postApi.js
-│  ├─ chatApi.js
-│  └─ mappers/
-│     ├─ placeMapper.js
-│     └─ postMapper.js
-├─ assets/
-│  └─ main.css
-├─ components/
-│  ├─ chat/
-│  ├─ common/
-│  ├─ home/
-│  ├─ place/
-│  └─ post/
-├─ data/
-├─ router/
-└─ views/
-```
-
----
-
-## 4. 실행 방법
-
-```bash
-cd fe
-npm install
-npm run dev
-```
-
-기본 개발 주소:
-
-```text
-http://localhost:5173
-```
-
-빌드:
-
-```bash
-npm run build
-```
-
----
-
-## 5. 환경변수
-
-`.env`:
-
-```env
-VITE_API_BASE_URL=http://127.0.0.1:8000
-```
-
-주의:
-
-- `.env`는 Git에 포함하지 않습니다.
-- 배포 시에는 Netlify 환경변수에 `VITE_API_BASE_URL`을 등록합니다.
-
----
-
-## 6. API 연동 구조
-
-화면 컴포넌트가 서버 응답을 직접 다루지 않도록 API 함수와 Mapper를 분리했습니다.
-
-```text
-View / Component
-→ api/*.js
-→ api/mappers/*.js
-→ FastAPI
-```
-
-### 장소 API
-
-- `getPlaces()`
-- `getPlace()`
-- `getNearbyPlaces()`
-- `likePlace()`
-- `unlikePlace()`
-
-### 게시글 API
-
-- `getPosts()`
-- `getPost()`
-- `createPost()`
-- `updatePost()`
-- `deletePost()`
-- `verifyPostPassword()`
-
-### 챗봇 API
-
-- `sendChatMessage()`
-
----
-
-## 7. 프론트 구현 포인트
-
-- 실제 API 데이터와 Mock 데이터 전환을 고려한 계층 구조
-- 장소 목록 URL Query 유지로 새로고침·공유 가능한 검색 상태 구현
-- Leaflet 지도 lifecycle 관리 및 마커 선택 상태 연동
-- 이미지 없음·좌표 없음·API 오류·빈 결과 상태 처리
-- 익명 커뮤니티 수정·삭제 흐름에서 비밀번호 모달과 sessionStorage 검증 흐름 구성
-- 챗봇 references를 RouterLink로 연결해 장소 상세 탐색까지 이어지는 흐름 제공
-
----
-
-## 8. 스크린샷
+# Product Experience
 
 <table>
   <tr>
@@ -184,12 +31,270 @@ View / Component
     <td><img src="docs/image-5.png" width="100%"></td>
     <td><img src="docs/image-7.png" width="100%"></td>
   </tr>
+</table>
+
+| Explore | Community | Ask |
+| --- | --- | --- |
+| 지역의 장소를 지도에서 탐색합니다. | 익명 게시글을 작성하고 공유합니다. | 챗봇을 통해 장소 추천을 확인합니다. |
+| Search · Category · Map | CRUD · Password Verification | Chat · References |
+
+---
+
+# Features
+
+## Place
+
+- 장소 검색
+- 카테고리 필터
+- 페이지네이션
+- 장소 상세
+- Leaflet 지도
+- 주변 장소 추천
+- 좋아요
+
+## Community
+
+- 익명 게시글 CRUD
+- 검색 / 카테고리
+- 비밀번호 확인
+- 페이지네이션
+
+## Chat
+
+- Floating Chat Widget
+- 대화 History
+- 추천 질문
+- 장소 Reference
+- Reference → 장소 상세 이동
+
+---
+
+# Engineering Highlights
+
+## 01. 검색 상태를 URL에 남기기
+
+장소 목록의 검색어와 Filter를
+Component 내부 상태에만 저장하지 않고 URL Query와 연결했습니다.
+
+```text
+/places
+   ↓
+?query=카페&category=FOOD&page=2
+```
+
+이를 통해:
+
+```text
+Search State
+   ↓
+URL Query
+   ↓
+Refresh / Share
+   ↓
+Same Result State
+```
+
+새로고침하거나 URL을 공유하더라도
+동일한 탐색 조건을 유지할 수 있습니다.
+
+---
+
+## 02. API Response를 화면이 직접 사용하지 않기
+
+Server의 Response 형태를
+Vue Component 전체에 직접 노출하지 않도록 API와 Mapper를 분리했습니다.
+
+```mermaid
+flowchart LR
+    A["View / Component"]
+    B["API"]
+    C["Mapper"]
+    D["Server"]
+
+    A --> B --> C --> D
+```
+
+```text
+src/api/
+├── placeApi.js
+├── postApi.js
+├── chatApi.js
+└── mappers/
+    ├── placeMapper.js
+    └── postMapper.js
+```
+
+Server 응답 구조가 변경되더라도
+UI 전체가 함께 수정되는 범위를 줄이기 위한 구조입니다.
+
+---
+
+## 03. Leaflet lifecycle을 Vue lifecycle과 맞추기
+
+지도는 일반 DOM 요소보다 별도의 lifecycle을 가집니다.
+
+```text
+Vue Mounted
+   ↓
+Leaflet Map 생성
+   ↓
+Marker / Props 변경
+   ↓
+Map Update
+   ↓
+Vue Unmount
+   ↓
+Map Cleanup
+```
+
+`onMounted`, `watch`, `onBeforeUnmount`를 이용해
+Map 생성·업데이트·해제 시점을 Vue lifecycle과 연결했습니다.
+
+---
+
+## 04. 익명 게시글 편집 상태 유지
+
+익명 게시글은 계정 로그인이 없기 때문에
+수정·삭제 시 게시글 Password를 확인합니다.
+
+```mermaid
+flowchart LR
+    A["Edit"]
+    B["Password Modal"]
+    C["Verify API"]
+    D["sessionStorage"]
+    E["Edit Form"]
+
+    A --> B --> C --> D --> E
+```
+
+같은 페이지 흐름 안에서 이미 인증한 게시글에 대해
+불필요하게 Password 확인을 반복하지 않도록
+검증 상태를 `sessionStorage`에 보관했습니다.
+
+---
+
+## 05. 챗봇 답변을 다시 실제 장소 탐색으로 연결
+
+챗봇에서 텍스트 답변만 보여주는 것으로 끝내지 않고
+응답에 포함된 Reference를 Vue Router와 연결합니다.
+
+```text
+Chat Response
+     ↓
+Reference
+     ↓
+RouterLink
+     ↓
+Place Detail
+```
+
+사용자는 추천받은 장소를 바로 실제 장소 상세 화면에서 확인할 수 있습니다.
+
+---
+
+# Frontend Structure
+
+```text
+src/
+├── api/
+│   ├── http.js
+│   ├── placeApi.js
+│   ├── postApi.js
+│   ├── chatApi.js
+│   └── mappers/
+│
+├── components/
+│   ├── chat/
+│   ├── common/
+│   ├── home/
+│   ├── place/
+│   └── post/
+│
+├── router/
+├── views/
+└── assets/
+```
+
+---
+
+# Tech Stack
+
+| Area | Stack |
+| --- | --- |
+| Framework | Vue 3 |
+| Build | Vite |
+| Language | JavaScript |
+| Router | Vue Router |
+| Style | Tailwind CSS 4 · CSS Variables |
+| Map | Leaflet · OpenStreetMap |
+| HTTP | Axios |
+
+---
+
+# API
+
+Frontend는 다음 API 영역과 연결됩니다.
+
+```text
+Frontend
+   ↓
+HTTP API
+   ├── Place
+   ├── Post
+   └── Chat
+```
+
+이 저장소는 **Frontend 구현을 담고 있으며**,
+FastAPI Backend 자체의 소스 저장소는 아닙니다.
+
+---
+
+# Run
+
+```bash
+npm install
+npm run dev
+```
+
+환경변수:
+
+```env
+VITE_API_BASE_URL=http://127.0.0.1:8000
+```
+
+Production Build:
+
+```bash
+npm run build
+```
+
+---
+
+# More Screens
+
+<details>
+<summary><strong>전체 화면 보기</strong></summary>
+
+<br/>
+
+<table>
   <tr>
     <td><img src="docs/image-8.png" width="100%"></td>
     <td><img src="docs/image-9.png" width="100%"></td>
   </tr>
   <tr>
-    <td><img src="docs/image-10.png" width="100%"></td> 
-    <td><img src="docs/image-11.png" width="100%"></td> 
+    <td><img src="docs/image-10.png" width="100%"></td>
+    <td><img src="docs/image-11.png" width="100%"></td>
   </tr>
 </table>
+
+</details>
+
+---
+
+<div align="center">
+
+**Discover places, share local stories, and ask LocalHub.**
+
+</div>
